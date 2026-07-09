@@ -793,6 +793,26 @@
         </div>
     </div>
 
+    <!-- Share Ad QR Code Modal -->
+    <div class="modal-overlay" id="qr-share-modal">
+        <div class="modal-container" style="max-width: 400px; text-align: center;">
+            <button class="modal-close" id="qr-modal-close">&times;</button>
+            <div class="checkout-header" style="background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 24px; position: relative;">
+                <h2 style="justify-content: center; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px;">🔗 Поделиться товаром</h2>
+                <p>Сканируйте QR-код для быстрого перехода к объявлению.</p>
+            </div>
+            <div class="checkout-body" style="padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                <div style="padding: 12px; background: white; border-radius: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <img id="qr-code-img" src="" alt="QR Code" style="width: 180px; height: 180px; display: block; border-radius: 4px;">
+                </div>
+                <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" id="share-link-input" readonly style="width: 100%; text-align: center; font-size: 13px; font-weight: 600; background: var(--bg-tertiary); cursor: pointer; border-radius: 8px; border: 1px solid var(--border-color); padding: 10px;" onclick="this.select()">
+                    <button type="button" class="btn-buy-safe" id="btn-copy-link" style="width: 100%; padding: 12px; font-weight: 700;">Копировать ссылку</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Interactive Simulated Seller Chat -->
     <div class="chat-widget" id="chat-widget">
         <div class="chat-header">

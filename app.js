@@ -417,6 +417,18 @@ function init() {
 
     // Event Listeners
     setupEventListeners();
+
+    // Deep Link check
+    const urlParams = new URLSearchParams(window.location.search);
+    const adIdParam = urlParams.get('adId');
+    if (adIdParam) {
+        const deepAd = ads.find(a => a.id === adIdParam);
+        if (deepAd) {
+            setTimeout(() => {
+                openAdDetails(deepAd);
+            }, 300);
+        }
+    }
 }
 
 // Event Listeners Setup
@@ -1053,7 +1065,10 @@ function openAdDetails(ad) {
                             <span class="meta-tag">${getCategoryNameRu(ad.category)}</span>
                             <span class="meta-tag">${ad.city}</span>
                             ${ad.vip ? '<span class="meta-tag vip-tag">VIP</span>' : ''}
-                            <button class="btn-msg-translate" id="btn-report-ad" style="margin-left: auto; color: var(--danger); border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 11px;">
+                            <button class="btn-msg-translate" id="btn-share-qr" style="margin-left: auto; color: var(--accent); border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700;">
+                                🔗 Поделиться
+                            </button>
+                            <button class="btn-msg-translate" id="btn-report-ad" style="margin-left: 12px; color: var(--danger); border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 11px;">
                                 ⚠️ Пожаловаться
                             </button>
                         </div>
@@ -1224,6 +1239,16 @@ function openAdDetails(ad) {
             localStorage.setItem('lalafo_ads', JSON.stringify(ads));
             renderAds();
             openAdDetails(ad); // Re-render details
+        });
+    }
+
+    // Share QR Action
+    const shareQrBtn = adDetailModal.querySelector('#btn-share-qr');
+    if (shareQrBtn) {
+        shareQrBtn.addEventListener('click', () => {
+            if (typeof openShareQrModal === 'function') {
+                openShareQrModal(ad);
+            }
         });
     }
 
@@ -3307,6 +3332,50 @@ function openFraudScanner(ad, reasonText) {
     }, 800);
 }
 
+// Open QR Share modal
+function openShareQrModal(ad) {
+    const modal = document.getElementById('qr-share-modal');
+    const qrImg = document.getElementById('qr-code-img');
+    const linkInput = document.getElementById('share-link-input');
+    const copyBtn = document.getElementById('btn-copy-link');
+    
+    if (!modal || !qrImg || !linkInput || !copyBtn) return;
+
+    // Generate Share URL pointing directly to this ad
+    const shareUrl = `${window.location.origin}${window.location.pathname}?adId=${ad.id}`;
+    linkInput.value = shareUrl;
+
+    // Use free public QR Server API to generate QR Code image client-side
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}`;
+
+    // Reset copy button styling
+    copyBtn.textContent = "Копировать ссылку";
+    copyBtn.style.background = "var(--accent)";
+
+    // Bind Copy Link Click
+    copyBtn.onclick = () => {
+        linkInput.select();
+        navigator.clipboard.writeText(shareUrl)
+            .then(() => {
+                copyBtn.textContent = "Ссылка скопирована! ✓";
+                copyBtn.style.background = "#10b981"; // Success green
+                setTimeout(() => {
+                    copyBtn.textContent = "Копировать ссылку";
+                    copyBtn.style.background = "var(--accent)";
+                }, 2000);
+            })
+            .catch(err => {
+                alert("Ошибка копирования в буфер обмена.");
+            });
+    };
+
+    // Close handler
+    const closeBtn = document.getElementById('qr-modal-close');
+    closeBtn.onclick = () => modal.classList.remove('active');
+
+    modal.classList.add('active');
+}
+
 // Global scope bindings for inline HTML clicks (e.g. toggleFavorite)
 window.toggleFavorite = toggleFavorite;
 window.removeUploadedImage = removeUploadedImage;
@@ -3330,6 +3399,7 @@ window.updateMapMarkers = updateMapMarkers;
 window.openMutualRatingModal = openMutualRatingModal;
 window.updateBuyerRatingUI = updateBuyerRatingUI;
 window.openFraudScanner = openFraudScanner;
+window.openShareQrModal = openShareQrModal;
 
 // Run App on Load
 window.addEventListener('DOMContentLoaded', init);
