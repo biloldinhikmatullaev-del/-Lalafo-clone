@@ -135,6 +135,142 @@ const DEFAULT_ADS = [
             verified: false
         },
         vip: false
+    },
+    {
+        id: "ad-9",
+        title: "Honda Fit 1.5, 2005 год",
+        price: 650000,
+        category: "cars",
+        city: "Ош",
+        description: "Продаю экономичный и надежный городской хэтчбек Honda Fit. Объем 1.5 л. Вариатор. Состояние хорошее, мотор шепчет, коробка работает плавно. Ходовая часть обслужена, новые зимние шины. Салон чистый, кондиционер заправлен.",
+        images: ["https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=800&auto=format&fit=crop"],
+        date: "2026-07-08",
+        seller: {
+            name: "Аскар",
+            phone: "+996 558 777-888",
+            rating: 4.6,
+            verified: false
+        },
+        vip: false
+    },
+    {
+        id: "ad-10",
+        title: "Посуточная аренда 1-комнатной квартиры в центре",
+        price: 3000,
+        category: "realestate",
+        city: "Бишкек",
+        description: "Сдаю посуточно уютную 1-комнатную квартиру с евроремонтом в самом центре Бишкека (Киевская / Тоголок Молдо). В квартире есть всё необходимое для комфортного проживания: Wi-Fi, кондиционер, смарт ТВ, чистая постель, вся посуда. Рядом ТРЦ Бишкек Парк.",
+        images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop"],
+        date: "2026-07-09",
+        seller: {
+            name: "Каныкей",
+            phone: "+996 701 555-444",
+            rating: 4.9,
+            verified: true
+        },
+        vip: true
+    },
+    {
+        id: "ad-11",
+        title: "Требуется администратор в чайхану «Нават»",
+        price: 25000,
+        category: "jobs",
+        city: "Ош",
+        description: "Ищем активного и ответственного администратора в ресторан национальной кухни чайхана «Нават» в г. Ош. Опыт работы в сфере общепита приветствуется. Обязанности: встреча гостей, контроль персонала, ведение кассы. График 2/2, бесплатное питание, развозка.",
+        images: ["https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800&auto=format&fit=crop"],
+        date: "2026-07-07",
+        seller: {
+            name: "Нават Ош",
+            phone: "+996 559 123-987",
+            rating: 4.8,
+            verified: true
+        },
+        vip: false
+    },
+    {
+        id: "ad-12",
+        title: "Услуги профессионального сантехника круглосуточно",
+        price: 800,
+        category: "services",
+        city: "Бишкек",
+        description: "Все виды сантехнических работ любой сложности в Бишкеке и пригороде. Установка унитазов, раковин, смесителей, ванн, душевых кабин. Устранение любых засоров, замена труб водоснабжения и отопления. Выезд в течение 30 минут. Качественно и недорого.",
+        images: ["https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&auto=format&fit=crop"],
+        date: "2026-07-08",
+        seller: {
+            name: "Бакыт Мастер",
+            phone: "+996 772 888-111",
+            rating: 5.0,
+            verified: true
+        },
+        vip: false
+    },
+    {
+        id: "ad-13",
+        title: "Кроссовки Nike Air Max 90, оригиналы",
+        price: 5500,
+        category: "fashion",
+        city: "Ош",
+        description: "Продаю оригинальные кроссовки Nike Air Max 90. Заказывали с официального сайта, не подошел размер. Размер 42 (стелька 27 см). Состояние абсолютно новое, в коробке. Легендарная амортизация, очень удобные для ходьбы и бега.",
+        images: ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop"],
+        date: "2026-07-09",
+        seller: {
+            name: "Султан",
+            phone: "+996 708 333-222",
+            rating: 4.4,
+            verified: false
+        },
+        vip: false
+    },
+    {
+        id: "ad-14",
+        title: "Macbook Air M1, 8GB/256GB Space Gray",
+        price: 68000,
+        category: "electronics",
+        city: "Каракол",
+        description: "Продаю MacBook Air на чипе Apple M1 в цвете Space Gray. Память 8 ГБ оперативной, 256 ГБ SSD. Ноутбук в отличном состоянии, бережное домашнее использование. Батарея держит отлично, всего 120 циклов перезарядки. В комплекте оригинальная зарядка.",
+        images: ["https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=800&auto=format&fit=crop"],
+        date: "2026-07-08",
+        seller: {
+            name: "Данияр",
+            phone: "+996 550 444-555",
+            rating: 4.7,
+            verified: true
+        },
+        vip: true
+    },
+    {
+        id: "ad-15",
+        title: "Набор садовых инструментов (10 предметов)",
+        price: 3200,
+        category: "homegarden",
+        city: "Нарын",
+        description: "Полный комплект инструментов для работы в саду и огороде. В наборе: лопатка, грабли, секатор, опрыскиватель, перчатки и удобный кейс для хранения. Все инструменты изготовлены из качественной нержавеющей стали с удобными ручками.",
+        images: ["https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&auto=format&fit=crop"],
+        date: "2026-07-06",
+        seller: {
+            name: "Садовод.кг",
+            phone: "+996 779 123-456",
+            rating: 4.5,
+            verified: false
+        },
+        vip: false
+    },
+    {
+        id: "ad-16",
+        title: "Honda Civic Coupe, 2012 год",
+        price: 950000,
+        category: "cars",
+        city: "Бишкек",
+        description: "Продаю стильное городское купе Honda Civic. Объем 1.8 л, автомат. Очень резвый и экономичный автомобиль. Состояние отличное, все расходники заменены, вложений не требует. Черный кожаный салон, мультируль, камера заднего вида.",
+        images: ["https://images.unsplash.com/photo-1605558202076-130a86033bc6?w=800&auto=format&fit=crop"],
+        date: "2026-07-09",
+        seller: {
+            name: "Тимур",
+            phone: "+996 700 888-999",
+            rating: 4.8,
+            verified: true
+        },
+        vip: false
     }
 ];
 
@@ -193,6 +329,12 @@ function init() {
     const storedAds = localStorage.getItem('lalafo_ads');
     if (storedAds) {
         ads = JSON.parse(storedAds);
+        // Merge default ads that are missing
+        DEFAULT_ADS.forEach(defAd => {
+            if (!ads.some(a => a.id === defAd.id)) {
+                ads.push(defAd);
+            }
+        });
     } else {
         ads = [...DEFAULT_ADS];
     }
@@ -206,7 +348,15 @@ function init() {
         'ad-5': [42.868, 74.550],
         'ad-6': [42.491, 78.389],
         'ad-7': [42.880, 74.615],
-        'ad-8': [40.505, 72.825]
+        'ad-8': [40.505, 72.825],
+        'ad-9': [40.518, 72.805],
+        'ad-10': [42.871, 74.572],
+        'ad-11': [40.531, 72.821],
+        'ad-12': [42.860, 74.610],
+        'ad-13': [40.509, 72.788],
+        'ad-14': [42.495, 78.401],
+        'ad-15': [41.428, 75.972],
+        'ad-16': [42.882, 74.590]
     };
     
     ads.forEach(ad => {
