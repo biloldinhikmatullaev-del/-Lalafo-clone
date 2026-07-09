@@ -2897,3 +2897,316 @@ footer {
 }
 
 /* End of Maps, Bargaining, Search Subscriptions & Recommendations Styles */
+
+/* --- Auctions, Bookings, Ratings & Fraud System Styles --- */
+
+/* Auction System Styles */
+.auction-badge {
+    background: linear-gradient(135deg, #ec4899, #d946ef);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 12;
+    box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.auction-panel {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.auction-panel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #ec4899, #d946ef);
+}
+
+.auction-timer {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ec4899;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.auction-bid-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 16px;
+}
+
+.auction-bid-current {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.auction-bid-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.auction-bids-list {
+    max-height: 110px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+.auction-bid-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.auction-bid-item:last-child {
+    border-bottom: none;
+}
+
+.auction-bidder-name {
+    font-weight: 600;
+}
+
+.auction-bidder-value {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.auction-bid-form {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.auction-bid-form input {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.btn-bid {
+    background: linear-gradient(135deg, #ec4899, #d946ef);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: var(--border-radius-md);
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(236, 72, 153, 0.2);
+}
+
+.btn-bid:hover {
+    box-shadow: 0 6px 14px rgba(236, 72, 153, 0.4);
+    background: #db2777;
+}
+
+/* Booking System Styles */
+.booked-badge {
+    background: #6b7280;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.card-img-wrapper.booked {
+    filter: grayscale(40%) opacity(75%);
+}
+
+.booked-countdown-overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.65);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    z-index: 12;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.booking-countdown-box {
+    background: rgba(107, 114, 128, 0.08);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    color: #4b5563;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+[data-theme="dark"] .booking-countdown-box {
+    background: rgba(156, 163, 175, 0.15);
+    color: #d1d5db;
+    border-color: rgba(156, 163, 175, 0.3);
+}
+
+.btn-book {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-book:hover {
+    color: #4b5563;
+    border-color: #6b7280;
+    background: var(--bg-secondary);
+}
+
+.btn-book.booked {
+    background: #6b7280;
+    color: white;
+    border-color: #6b7280;
+}
+
+/* Mutual Ratings Styles */
+.rating-stars-input {
+    display: flex;
+    gap: 8px;
+    font-size: 32px;
+    justify-content: center;
+    margin: 16px 0;
+}
+
+.rating-star-btn {
+    cursor: pointer;
+    color: var(--border-color);
+    transition: var(--transition-smooth);
+}
+
+.rating-star-btn.selected,
+.rating-star-btn:hover {
+    color: #f59e0b;
+    transform: scale(1.1);
+}
+
+/* AI Fraud Scanner Styles */
+.fraud-risk-container {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.fraud-risk-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.fraud-risk-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.fraud-risk-value {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.fraud-risk-gauge {
+    height: 10px;
+    width: 100%;
+    background: var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.fraud-risk-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(to right, #10b981, #f59e0b, #ef4444);
+    transition: width 0.4s ease;
+}
+
+.fraud-checkpoints-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 12px;
+}
+
+.fraud-checkpoint-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.fraud-checkpoint-name {
+    color: var(--text-secondary);
+}
+
+.fraud-checkpoint-status {
+    font-weight: 700;
+}
+
+.fraud-checkpoint-status.ok {
+    color: #10b981;
+}
+
+.fraud-checkpoint-status.warning {
+    color: #f59e0b;
+}
+
+.fraud-checkpoint-status.danger {
+    color: #ef4444;
+}
+
+/* End of Auctions, Bookings, Ratings & Fraud System Styles */

@@ -221,6 +221,18 @@ function init() {
                 ];
             }
         }
+
+        // Set auction status for specific items (ad-1 and ad-5) if not already initialized
+        if ((ad.id === 'ad-1' || ad.id === 'ad-5') && !ad.auction) {
+            ad.auction = true;
+            ad.currentBid = ad.price - 15000; // Start bid below original price
+            ad.auctionTimerEnd = Date.now() + 3 * 3600 * 1000 + 45 * 60 * 1000; // 3h 45m from now
+            ad.bids = [
+                { name: "Эмиль", amount: ad.price - 17000 },
+                { name: "Белек", amount: ad.price - 20000 },
+                { name: "Самат", amount: ad.price - 22000 }
+            ];
+        }
     });
 
     localStorage.setItem('lalafo_ads', JSON.stringify(ads));
@@ -245,6 +257,13 @@ function init() {
     renderVIPAds();
     renderAds();
     setupEscrowAndChatUpgrades();
+
+    // Load Buyer Rating stats
+    buyerRating = parseFloat(localStorage.getItem('lalafo_buyer_rating') || '4.9');
+    buyerReviewsCount = parseInt(localStorage.getItem('lalafo_buyer_reviews_count') || '12', 10);
+    if (typeof updateBuyerRatingUI === 'function') {
+        updateBuyerRatingUI();
+    }
 
     // Event Listeners
     setupEventListeners();
@@ -445,6 +464,9 @@ function updateCategoryPills(activeCategory) {
 // Filter and Sort Data
 function getFilteredAds(vipOnly = false) {
     let result = ads.filter(ad => {
+        // Exclude blocked ads
+        if (ad.blocked) return false;
+
         // VIP condition
         if (vipOnly && !ad.vip) return false;
 
@@ -562,16 +584,31 @@ function createAdCard(ad) {
     // Check if favorited
     const isFav = favorites.includes(ad.id);
 
-    const priceFormatted = new Intl.NumberFormat('ru-RU').format(ad.price);
+    const isBooked = ad.booking && ad.booking.expiresAt > Date.now();
+
+    const priceFormatted = ad.auction 
+        ? `Ставка: ${new Intl.NumberFormat('ru-RU').format(ad.currentBid)}` 
+        : new Intl.NumberFormat('ru-RU').format(ad.price);
 
     card.innerHTML = `
-        <div class="card-img-wrapper">
+        <div class="card-img-wrapper ${isBooked ? 'booked' : ''}">
             ${ad.vip ? `
             <div class="vip-badge">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                 </svg>
                 VIP
+            </div>` : ''}
+            ${ad.auction ? `
+            <div class="auction-badge">
+                📢 Аукцион
+            </div>` : ''}
+            ${isBooked ? `
+            <div class="booked-badge">
+                🔒 Забронировано
+            </div>
+            <div class="booked-countdown-overlay" data-expiry="${ad.booking.expiresAt}">
+                ⏳ 00:00
             </div>` : ''}
             ${ad.seller.verified ? `
             <div class="verified-seller-badge-on-card" style="position: absolute; bottom: 12px; left: 12px; background: rgba(59, 130, 246, 0.95); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; display: flex; align-items: center; gap: 4px; z-index: 2; box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);">
@@ -588,7 +625,7 @@ function createAdCard(ad) {
             <img src="${ad.images[0]}" class="card-img" alt="${ad.title}" onerror="this.src='https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600'">
         </div>
         <div class="card-content">
-            <div class="card-price">${priceFormatted} KGS</div>
+            <div class="card-price" style="${ad.auction ? 'color: #ec4899;' : ''}">${priceFormatted} KGS</div>
             <h3 class="card-title">${ad.title}</h3>
             <div class="card-footer">
                 <div class="card-location">
@@ -788,12 +825,27 @@ function handlePostAdSubmit(e) {
     alert("Объявление успешно опубликовано!");
 }
 
+let detailModalInterval = null;
+let buyerRating = 4.9;
+let buyerReviewsCount = 12;
+
 // Open Ad Details View
 function openAdDetails(ad) {
     activeAdDetail = ad;
     let activeImgIndex = 0;
 
+    // Clear old intervals
+    if (detailModalInterval) {
+        clearInterval(detailModalInterval);
+        detailModalInterval = null;
+    }
+
     const priceFormatted = new Intl.NumberFormat('ru-RU').format(ad.price);
+    
+    // Check booking status
+    const isBooked = ad.booking && ad.booking.expiresAt > Date.now();
+    const bookedByMe = isBooked && ad.booking.buyer === "Вы";
+    const bookedByOther = isBooked && ad.booking.buyer !== "Вы";
 
     adDetailModal.innerHTML = `
         <div class="modal-container detail-modal-container">
@@ -807,11 +859,53 @@ function openAdDetails(ad) {
                     ` : ''}
                 </div>
                 <div class="detail-info">
+                    <!-- Auction panel if ad is an auction -->
+                    ${ad.auction ? `
+                    <div class="auction-panel">
+                        <div class="auction-timer" id="auc-timer-${ad.id}">
+                            ⏳ Загрузка таймера...
+                        </div>
+                        <div class="auction-bid-row">
+                            <div>
+                                <div class="auction-bid-label">Текущая ставка</div>
+                                <div class="auction-bid-current" id="auc-current-${ad.id}">${new Intl.NumberFormat('ru-RU').format(ad.currentBid)} KGS</div>
+                            </div>
+                            <div>
+                                <div class="auction-bid-label">Минимальный шаг</div>
+                                <div style="font-weight: 700; font-size: 13px; color: var(--text-secondary); margin-top: 4px;">+500 KGS</div>
+                            </div>
+                        </div>
+                        <div class="auction-bids-list" id="auc-bids-list-${ad.id}">
+                            ${ad.bids.map(b => `
+                                <div class="auction-bid-item">
+                                    <span class="auction-bidder-name">${b.name}</span>
+                                    <span class="auction-bidder-value">${new Intl.NumberFormat('ru-RU').format(b.amount)} KGS</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <form class="auction-bid-form" id="auc-bid-form-${ad.id}">
+                            <input type="number" id="auc-input-${ad.id}" min="${ad.currentBid + 500}" value="${ad.currentBid + 500}" required>
+                            <button type="submit" class="btn-bid">Ставка</button>
+                        </form>
+                    </div>
+                    ` : ''}
+
+                    <!-- Booking Countdown block if booked -->
+                    ${isBooked ? `
+                    <div class="booking-countdown-box">
+                        <span>🔒 <strong>Забронировано ${bookedByMe ? 'вами' : ad.booking.buyer}</strong></span>
+                        <span id="booking-timer-display" style="font-weight: 700; font-family: monospace;">00:00:00</span>
+                    </div>
+                    ` : ''}
+
                     <div class="detail-header">
-                        <div class="detail-meta-tags">
+                        <div class="detail-meta-tags" style="display: flex; width: 100%; align-items: center;">
                             <span class="meta-tag">${getCategoryNameRu(ad.category)}</span>
                             <span class="meta-tag">${ad.city}</span>
                             ${ad.vip ? '<span class="meta-tag vip-tag">VIP</span>' : ''}
+                            <button class="btn-msg-translate" id="btn-report-ad" style="margin-left: auto; color: var(--danger); border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 11px;">
+                                ⚠️ Пожаловаться
+                            </button>
                         </div>
                         <div class="detail-price">${priceFormatted} KGS</div>
                         <h1 class="detail-title">${ad.title}</h1>
@@ -846,24 +940,31 @@ function openAdDetails(ad) {
                         </div>
 
                         <div class="detail-action-buttons" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                            <button class="btn-show-contact" id="btn-show-contact" data-phone="${ad.seller.phone}">Показать номер телефона</button>
                             <div style="display: flex; gap: 12px; width: 100%;">
-                                <button class="btn-chat-seller" id="btn-chat-seller" style="flex: 1;">
+                                <button class="btn-show-contact" id="btn-show-contact" data-phone="${ad.seller.phone}" style="flex: 1;">Показать телефон</button>
+                                ${ad.seller.name !== "Вы" ? `
+                                <button class="btn-book ${bookedByMe ? 'booked' : ''}" id="btn-book-ad" style="flex: 1;" ${bookedByOther ? 'disabled style="opacity: 0.5;"' : ''}>
+                                    ${bookedByMe ? '🔓 Снять бронь' : '🔒 Забронировать'}
+                                </button>
+                                ` : ''}
+                            </div>
+                            <div style="display: flex; gap: 12px; width: 100%;">
+                                <button class="btn-chat-seller" id="btn-chat-seller" style="flex: 1;" ${bookedByOther ? 'disabled style="opacity: 0.5;"' : ''}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                     </svg>
                                     Написать продавцу
                                 </button>
-                                ${ad.seller.name !== "Вы" ? `
-                                <button class="btn-msg-offer" id="btn-offer-price" style="flex: 0.8; height: 42px; border-radius: 6px; padding: 0 12px; justify-content: center; font-size: 12px;">
+                                ${ad.seller.name !== "Вы" && !ad.auction ? `
+                                <button class="btn-msg-offer" id="btn-offer-price" style="flex: 0.8; height: 42px; border-radius: 6px; padding: 0 12px; justify-content: center; font-size: 12px;" ${isBooked ? 'disabled style="opacity: 0.5;"' : ''}>
                                     🤝 Торговаться
                                 </button>
-                                <button class="btn-buy-safe" id="btn-buy-safe-deal" style="flex: 1.2;">
+                                <button class="btn-buy-safe" id="btn-buy-safe-deal" style="flex: 1.2;" ${isBooked ? 'disabled style="opacity: 0.5;"' : ''}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
                                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                         <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
                                     </svg>
-                                    Купить с Безопасной сделкой
+                                    Купить по Безопасной сделке
                                 </button>` : ''}
                             </div>
                         </div>
@@ -889,9 +990,44 @@ function openAdDetails(ad) {
     // Render similar ads in this modal
     renderSimilarAds(ad);
 
+    // Start intervals for countdowns
+    if (isBooked || ad.auction) {
+        detailModalInterval = setInterval(() => {
+            // Update booking countdown
+            if (isBooked) {
+                const timeLeft = ad.booking.expiresAt - Date.now();
+                const timerEl = document.getElementById('booking-timer-display');
+                if (timeLeft <= 0) {
+                    ad.booking = null;
+                    localStorage.setItem('lalafo_ads', JSON.stringify(ads));
+                    clearInterval(detailModalInterval);
+                    openAdDetails(ad); // Reload details
+                    renderAds();
+                } else if (timerEl) {
+                    timerEl.textContent = formatTimeDuration(timeLeft);
+                }
+            }
+            // Update auction countdown
+            if (ad.auction) {
+                const timeLeft = ad.auctionTimerEnd - Date.now();
+                const timerEl = document.getElementById(`auc-timer-${ad.id}`);
+                if (timeLeft <= 0) {
+                    if (timerEl) timerEl.textContent = "⏳ Аукцион завершен!";
+                    const bidForm = document.getElementById(`auc-bid-form-${ad.id}`);
+                    if (bidForm) bidForm.style.display = 'none';
+                } else if (timerEl) {
+                    timerEl.textContent = `⏳ До конца: ${formatTimeDuration(timeLeft)}`;
+                }
+            }
+        }, 1000);
+    }
+
     // Bind inside-modal events
     const closeBtn = adDetailModal.querySelector('.modal-close');
-    closeBtn.addEventListener('click', closeActiveModals);
+    closeBtn.addEventListener('click', () => {
+        if (detailModalInterval) clearInterval(detailModalInterval);
+        closeActiveModals();
+    });
 
     // Show Contact Number
     const showContactBtn = adDetailModal.querySelector('#btn-show-contact');
@@ -919,12 +1055,50 @@ function openAdDetails(ad) {
         });
     }
 
+    // Booking Action
+    const bookBtn = adDetailModal.querySelector('#btn-book-ad');
+    if (bookBtn) {
+        bookBtn.addEventListener('click', () => {
+            if (bookedByMe) {
+                // Cancel booking
+                ad.booking = null;
+                alert("Бронирование успешно отменено.");
+            } else {
+                // Set booking
+                ad.booking = {
+                    buyer: "Вы",
+                    expiresAt: Date.now() + 2 * 3600 * 1000 // 2 hours
+                };
+                alert("Товар успешно забронирован за вами на 2 часа!");
+            }
+            localStorage.setItem('lalafo_ads', JSON.stringify(ads));
+            renderAds();
+            openAdDetails(ad); // Re-render details
+        });
+    }
+
+    // Report Action
+    const reportBtn = adDetailModal.querySelector('#btn-report-ad');
+    reportBtn.addEventListener('click', () => {
+        const reason = prompt(`Пожалуйста, выберите причину жалобы:\n1 - Мошенничество\n2 - Недостоверные данные\n3 - Запрещенный товар\n\nВведите цифру причины:`, "1");
+        if (reason === null) return;
+        
+        let reasonText = "Мошенничество";
+        if (reason === "2") reasonText = "Недостоверные данные";
+        else if (reason === "3") reasonText = "Запрещенный товар";
+
+        closeActiveModals();
+        openFraudScanner(ad, reasonText);
+    });
+
     // Chat Action
     const chatSellerBtn = adDetailModal.querySelector('#btn-chat-seller');
-    chatSellerBtn.addEventListener('click', () => {
-        closeActiveModals();
-        openChatWithSeller(ad);
-    });
+    if (chatSellerBtn) {
+        chatSellerBtn.addEventListener('click', () => {
+            closeActiveModals();
+            openChatWithSeller(ad);
+        });
+    }
 
     // Buy Safe Action
     const buySafeBtn = adDetailModal.querySelector('#btn-buy-safe-deal');
@@ -2216,6 +2390,12 @@ function confirmItemReceipt(dealId) {
     localStorage.setItem('lalafo_safe_deals', JSON.stringify(safeDeals));
     renderDealsList();
     alert("Сделка подтверждена! Зарезервированная сумма выплачена продавцу. Спасибо за покупку!");
+    
+    // Open Mutual Rating Modal
+    closeActiveModals();
+    if (typeof openMutualRatingModal === 'function') {
+        openMutualRatingModal(deal);
+    }
 }
 
 function disputeDeal(dealId) {
@@ -2679,6 +2859,304 @@ function buyDiscountedAd(adId, price) {
     openSafeDealCheckout(modifiedAd);
 }
 
+/* --- Auctions, Bookings, Ratings & Fraud System Logic --- */
+
+// Helper to format ms duration into hh:mm:ss
+function formatTimeDuration(ms) {
+    if (ms <= 0) return "00:00:00";
+    const totalSeconds = Math.floor(ms / 1000);
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+}
+
+// Background Outbid Simulation
+function simulateBackgroundBidding() {
+    // Find all active auctions that are not expired and not blocked
+    const activeAuctions = ads.filter(ad => ad.auction && ad.auctionTimerEnd > Date.now() && !ad.blocked);
+    if (activeAuctions.length === 0) return;
+
+    activeAuctions.forEach(ad => {
+        // 30% chance another user bids
+        if (Math.random() < 0.3) {
+            const outbidStep = 500 + Math.floor(Math.random() * 3) * 500; // 500, 1000, or 1500 KGS
+            const previousHighestBidder = ad.bids.length > 0 ? ad.bids[0].name : "";
+            
+            const randomNames = ["Медер", 'Азиз', 'Нурбек', 'Карина', 'Дастан', 'Эрмек', 'Айжана'];
+            const bidderName = randomNames[Math.floor(Math.random() * randomNames.length)];
+            
+            ad.currentBid += outbidStep;
+            ad.bids.unshift({
+                name: bidderName,
+                amount: ad.currentBid
+            });
+
+            // Save
+            localStorage.setItem('lalafo_ads', JSON.stringify(ads));
+
+            // If this ad's detail modal is currently open, update DOM values
+            if (activeAdDetail && activeAdDetail.id === ad.id) {
+                const currentBidEl = document.getElementById(`auc-current-${ad.id}`);
+                const bidsListEl = document.getElementById(`auc-bids-list-${ad.id}`);
+                const bidInput = document.getElementById(`auc-input-${ad.id}`);
+                
+                if (currentBidEl) {
+                    currentBidEl.textContent = `${new Intl.NumberFormat('ru-RU').format(ad.currentBid)} KGS`;
+                }
+                if (bidInput) {
+                    bidInput.min = ad.currentBid + 500;
+                    bidInput.value = ad.currentBid + 500;
+                }
+                if (bidsListEl) {
+                    bidsListEl.innerHTML = ad.bids.map(b => `
+                        <div class="auction-bid-item">
+                            <span class="auction-bidder-name">${b.name}</span>
+                            <span class="auction-bidder-value">${new Intl.NumberFormat('ru-RU').format(b.amount)} KGS</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Sync main feed cards
+            renderAds();
+
+            // Send push toast notification if the user was outbid
+            if (previousHighestBidder === "Вы") {
+                alert(`⚠️ Внимание! Ваша ставка на "${ad.title}" была перебита пользователем ${bidderName}. Новая ставка: ${new Intl.NumberFormat('ru-RU').format(ad.currentBid)} KGS.`);
+            }
+        }
+    });
+}
+
+// Start outbid simulation every 25 seconds
+setInterval(simulateBackgroundBidding, 25000);
+
+// Periodic updater for booked cards countdown in feed
+setInterval(() => {
+    const activeTimerOverlays = document.querySelectorAll('.booked-countdown-overlay');
+    activeTimerOverlays.forEach(overlay => {
+        const expiry = parseInt(overlay.dataset.expiry, 10);
+        const timeLeft = expiry - Date.now();
+        if (timeLeft <= 0) {
+            // Expired! Trigger ads re-render to clear locked state
+            renderAds();
+        } else {
+            overlay.textContent = `⏳ ${formatTimeDuration(timeLeft).substring(3)}`; // display mm:ss
+        }
+    });
+}, 1000);
+
+// Open Mutual Review rating modal
+function openMutualRatingModal(deal) {
+    const modal = document.getElementById('mutual-rating-modal');
+    if (!modal) return;
+
+    // Reset fields
+    document.getElementById('rating-seller-title').textContent = `Оцените продавца ${deal.sellerName}`;
+    document.getElementById('rating-comment').value = '';
+    
+    const stars = modal.querySelectorAll('.rating-star-btn');
+    stars.forEach(s => s.classList.remove('selected'));
+    
+    // Store current deal context
+    modal.dataset.dealId = deal.id;
+    modal.dataset.sellerName = deal.sellerName;
+    modal.dataset.score = "0";
+
+    // Star Selection Bindings
+    stars.forEach(star => {
+        star.onclick = () => {
+            const val = parseInt(star.dataset.value, 10);
+            modal.dataset.score = String(val);
+            stars.forEach((s, idx) => {
+                if (idx < val) s.classList.add('selected');
+                else s.classList.remove('selected');
+            });
+        };
+    });
+
+    // Close button
+    const closeBtn = document.getElementById('rating-modal-close');
+    closeBtn.onclick = () => modal.classList.remove('active');
+
+    // Submit rating
+    const submitBtn = document.getElementById('btn-submit-rating');
+    submitBtn.onclick = () => {
+        const score = parseInt(modal.dataset.score, 10);
+        if (score === 0) {
+            alert("Пожалуйста, поставьте оценку звездами.");
+            return;
+        }
+
+        modal.classList.remove('active');
+        alert("Спасибо! Ваша оценка отправлена продавцу.");
+
+        // Simulate Seller rating the buyer back!
+        setTimeout(() => {
+            alert(`💬 Продавец ${deal.sellerName} оставил ответный отзыв о вас:\n⭐ 5.0! "Отличный покупатель, быстрая оплата, вежливое общение. Рекомендую!"`);
+            
+            // Increment buyer ratings count
+            buyerReviewsCount++;
+            buyerRating = parseFloat(((buyerRating * (buyerReviewsCount - 1) + 5.0) / buyerReviewsCount).toFixed(2));
+            
+            localStorage.setItem('lalafo_buyer_rating', String(buyerRating));
+            localStorage.setItem('lalafo_buyer_reviews_count', String(buyerReviewsCount));
+            
+            updateBuyerRatingUI();
+        }, 2500);
+    };
+
+    modal.classList.add('active');
+}
+
+// Update Buyer Rating UI counters
+function updateBuyerRatingUI() {
+    const scoreEl = document.getElementById('buyer-rating-score');
+    const countEl = document.getElementById('buyer-rating-count');
+    
+    if (scoreEl) scoreEl.textContent = buyerRating.toFixed(1);
+    if (countEl) countEl.textContent = `на основе ${buyerReviewsCount} отзывов`;
+}
+
+// AI Fraud Scanner execution
+function openFraudScanner(ad, reasonText) {
+    const modal = document.getElementById('fraud-scanner-modal');
+    const loader = document.getElementById('fraud-scan-loader');
+    const results = document.getElementById('fraud-scan-results');
+    if (!modal || !loader || !results) return;
+
+    // Reset modals layout
+    loader.style.display = 'block';
+    results.style.display = 'none';
+    modal.classList.add('active');
+
+    document.getElementById('fraud-scanner-status-text').textContent = "ИИ сканирует объявление...";
+
+    // Bind close actions
+    const closeBtn = document.getElementById('fraud-modal-close');
+    closeBtn.onclick = () => modal.classList.remove('active');
+    
+    const closeResultBtn = document.getElementById('btn-close-fraud');
+    closeResultBtn.onclick = () => modal.classList.remove('active');
+
+    // Run AI checks pipeline
+    setTimeout(() => {
+        // Step 1: Price Check
+        document.getElementById('fraud-scanner-status-text').textContent = "Проверка цены...";
+        
+        // Calculate median category price
+        const catAds = ads.filter(a => a.category === ad.category && a.id !== ad.id);
+        let categoryMedian = ad.price;
+        if (catAds.length > 0) {
+            const sortedPrices = catAds.map(a => a.price).sort((a,b) => a - b);
+            categoryMedian = sortedPrices[Math.floor(sortedPrices.length / 2)];
+        }
+
+        let priceRisk = 0; // out of 40
+        let priceStatusHtml = "";
+        
+        if (ad.price < categoryMedian * 0.35) {
+            priceRisk = 40;
+            priceStatusHtml = `<span class="fraud-checkpoint-status danger">ОПАСНО: занижена на ${Math.round((1 - ad.price / categoryMedian) * 100)}%</span>`;
+        } else if (ad.price < categoryMedian * 0.6) {
+            priceRisk = 20;
+            priceStatusHtml = `<span class="fraud-checkpoint-status warning">ПОДОЗРИТЕЛЬНО: цена занижена</span>`;
+        } else {
+            priceRisk = 0;
+            priceStatusHtml = `<span class="fraud-checkpoint-status ok">В норме (ОК)</span>`;
+        }
+
+        setTimeout(() => {
+            // Step 2: Keywords Check
+            document.getElementById('fraud-scanner-status-text').textContent = "Поиск подозрительных слов...";
+            const stopWords = ['предоплата', 'киви', 'qiwi', 'вышлите код', 'без встречи', 'предоплату', 'карта', 'перевод до'];
+            const descLower = ad.description.toLowerCase();
+            const titleLower = ad.title.toLowerCase();
+            
+            let keywordRisk = 0; // out of 40
+            let keywordStatusHtml = "";
+            let matchedWords = [];
+            
+            stopWords.forEach(word => {
+                if (descLower.includes(word) || titleLower.includes(word)) {
+                    matchedWords.push(word);
+                }
+            });
+
+            if (matchedWords.length > 0) {
+                keywordRisk = 40;
+                keywordStatusHtml = `<span class="fraud-checkpoint-status danger">ОПАСНО: стоп-слово "${matchedWords[0]}"</span>`;
+            } else {
+                keywordRisk = 0;
+                keywordStatusHtml = `<span class="fraud-checkpoint-status ok">В норме (ОК)</span>`;
+            }
+
+            setTimeout(() => {
+                // Step 3: Seller verification check
+                document.getElementById('fraud-scanner-status-text').textContent = "Статус продавца...";
+                let sellerRisk = 0; // out of 20
+                let sellerStatusHtml = "";
+
+                if (ad.seller.verified) {
+                    sellerRisk = 0;
+                    sellerStatusHtml = `<span class="fraud-checkpoint-status ok">Проверенный продавец (ОК)</span>`;
+                } else {
+                    sellerRisk = 20;
+                    sellerStatusHtml = `<span class="fraud-checkpoint-status warning">Не проверен</span>`;
+                }
+
+                setTimeout(() => {
+                    // Final Calculation
+                    const totalRisk = priceRisk + keywordRisk + sellerRisk;
+                    
+                    // Render status bars
+                    document.getElementById('fraud-risk-score').textContent = `${totalRisk}%`;
+                    
+                    const riskBar = document.getElementById('fraud-risk-bar');
+                    riskBar.style.width = `${totalRisk}%`;
+                    
+                    if (totalRisk > 60) {
+                        riskBar.style.background = '#ef4444'; // Red danger
+                        document.getElementById('fraud-verdict-desc').innerHTML = `
+                            <strong>Вердикт ИИ:</strong> Риск критический (${totalRisk}%). Превышен лимит безопасности (60%). 
+                            Объявление автоматически заблокировано модератором за подозрение в мошенничестве.
+                        `;
+                        
+                        // Block ad!
+                        ad.blocked = true;
+                        localStorage.setItem('lalafo_ads', JSON.stringify(ads));
+                        renderAds();
+                    } else if (totalRisk >= 30) {
+                        riskBar.style.background = '#f59e0b'; // Amber warning
+                        document.getElementById('fraud-verdict-desc').innerHTML = `
+                            <strong>Вердикт ИИ:</strong> Риск средний (${totalRisk}%). Жалоба направлена живым модераторам для ручной сверки. 
+                            Объявление пока остается в поиске.
+                        `;
+                    } else {
+                        riskBar.style.background = '#10b981'; // Green OK
+                        document.getElementById('fraud-verdict-desc').innerHTML = `
+                            <strong>Вердикт ИИ:</strong> Риск минимальный (${totalRisk}%). Подозрительной активности не обнаружено. 
+                            Жалоба отклонена.
+                        `;
+                    }
+
+                    // Render checkpoints
+                    document.getElementById('chk-price').outerHTML = priceStatusHtml;
+                    document.getElementById('chk-text').outerHTML = keywordStatusHtml;
+                    document.getElementById('chk-seller').outerHTML = sellerStatusHtml;
+
+                    // Switch panels
+                    loader.style.display = 'none';
+                    results.style.display = 'block';
+                }, 800);
+            }, 800);
+        }, 800);
+    }, 800);
+}
+
 // Global scope bindings for inline HTML clicks (e.g. toggleFavorite)
 window.toggleFavorite = toggleFavorite;
 window.removeUploadedImage = removeUploadedImage;
@@ -2699,6 +3177,9 @@ window.translateMessage = translateMessage;
 window.openAdFromMap = openAdFromMap;
 window.buyDiscountedAd = buyDiscountedAd;
 window.updateMapMarkers = updateMapMarkers;
+window.openMutualRatingModal = openMutualRatingModal;
+window.updateBuyerRatingUI = updateBuyerRatingUI;
+window.openFraudScanner = openFraudScanner;
 
 // Run App on Load
 window.addEventListener('DOMContentLoaded', init);
