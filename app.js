@@ -12,7 +12,8 @@ const DEFAULT_ADS = [
         seller: {
             name: "Алексей",
             phone: "+996 700 123-456",
-            rating: 4.8
+            rating: 4.8,
+            verified: true
         },
         vip: true
     },
@@ -28,7 +29,8 @@ const DEFAULT_ADS = [
         seller: {
             name: "Мирлан",
             phone: "+996 555 987-654",
-            rating: 4.9
+            rating: 4.9,
+            verified: true
         },
         vip: true
     },
@@ -44,7 +46,8 @@ const DEFAULT_ADS = [
         seller: {
             name: "Айсулуу",
             phone: "+996 777 445-566",
-            rating: 4.7
+            rating: 4.7,
+            verified: true
         },
         vip: true
     },
@@ -60,7 +63,8 @@ const DEFAULT_ADS = [
         seller: {
             name: "Нурбек",
             phone: "+996 500 112-233",
-            rating: 4.5
+            rating: 4.5,
+            verified: false
         },
         vip: false
     },
@@ -76,7 +80,8 @@ const DEFAULT_ADS = [
         seller: {
             name: "МебельМаркет",
             phone: "+996 550 550-123",
-            rating: 4.6
+            rating: 4.6,
+            verified: true
         },
         vip: false
     },
@@ -92,7 +97,8 @@ const DEFAULT_ADS = [
         seller: {
             name: "DevStudio",
             phone: "+996 705 998-877",
-            rating: 5.0
+            rating: 5.0,
+            verified: true
         },
         vip: false
     },
@@ -108,7 +114,8 @@ const DEFAULT_ADS = [
         seller: {
             name: "Эрлан",
             phone: "+996 770 456-789",
-            rating: 4.3
+            rating: 4.3,
+            verified: false
         },
         vip: false
     },
@@ -124,7 +131,8 @@ const DEFAULT_ADS = [
         seller: {
             name: "Руслан",
             phone: "+996 552 111-222",
-            rating: 4.7
+            rating: 4.7,
+            verified: false
         },
         vip: false
     }
@@ -206,6 +214,7 @@ function init() {
 
     // Initial Renders
     updateFavoritesBadge();
+    updateVerificationHeader();
     renderVIPAds();
     renderAds();
 
@@ -304,6 +313,63 @@ function setupEventListeners() {
     document.getElementById('chat-close').addEventListener('click', () => {
         chatWidget.classList.remove('active');
     });
+
+    // AI Assistant Event Listeners
+    const btnAiAssist = document.getElementById('btn-ai-assist-trigger');
+    if (btnAiAssist) {
+        btnAiAssist.addEventListener('click', runAIAssistant);
+    }
+    const aiModalClose = document.getElementById('ai-modal-close');
+    if (aiModalClose) {
+        aiModalClose.addEventListener('click', () => {
+            document.getElementById('ai-assistant-modal').classList.remove('active');
+        });
+    }
+    const aiResCancel = document.getElementById('ai-res-cancel-btn');
+    if (aiResCancel) {
+        aiResCancel.addEventListener('click', () => {
+            document.getElementById('ai-assistant-modal').classList.remove('active');
+        });
+    }
+    const aiResApply = document.getElementById('ai-res-apply-btn');
+    if (aiResApply) {
+        aiResApply.addEventListener('click', applyAIGeneratedData);
+    }
+
+    // Verification Event Listeners
+    const verifyProfileBtn = document.getElementById('verify-profile-btn');
+    if (verifyProfileBtn) {
+        verifyProfileBtn.addEventListener('click', openVerificationModal);
+    }
+    const verifyModalClose = document.getElementById('verify-modal-close');
+    if (verifyModalClose) {
+        verifyModalClose.addEventListener('click', () => {
+            document.getElementById('verification-modal').classList.remove('active');
+            stopBioVideo();
+        });
+    }
+    const verifyPrevBtn = document.getElementById('verify-prev-btn');
+    if (verifyPrevBtn) {
+        verifyPrevBtn.addEventListener('click', handleVerifyPrevStep);
+    }
+    const verifyNextBtn = document.getElementById('verify-next-btn');
+    if (verifyNextBtn) {
+        verifyNextBtn.addEventListener('click', handleVerifyNextStep);
+    }
+    const btnStartBio = document.getElementById('btn-start-biometrics');
+    if (btnStartBio) {
+        btnStartBio.addEventListener('click', startBiometricScan);
+    }
+    const docUploadTrigger = document.getElementById('document-upload-trigger');
+    const docInput = document.getElementById('verify-doc-input');
+    if (docUploadTrigger && docInput) {
+        docUploadTrigger.addEventListener('click', () => docInput.click());
+        docInput.addEventListener('change', handleVerifyDocUpload);
+    }
+    const docRemove = document.getElementById('verify-doc-remove');
+    if (docRemove) {
+        docRemove.addEventListener('click', removeVerifyDoc);
+    }
 }
 
 // Theme Handlers
@@ -475,6 +541,13 @@ function createAdCard(ad) {
                 </svg>
                 VIP
             </div>` : ''}
+            ${ad.seller.verified ? `
+            <div class="verified-seller-badge-on-card" style="position: absolute; bottom: 12px; left: 12px; background: rgba(59, 130, 246, 0.95); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; display: flex; align-items: center; gap: 4px; z-index: 2; box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Проверен
+            </div>` : ''}
             <button class="btn-favorite ${isFav ? 'active' : ''}" data-id="${ad.id}" onclick="event.stopPropagation(); toggleFavorite('${ad.id}')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -564,19 +637,22 @@ function openModal(modal) {
 }
 
 function closeActiveModals() {
-    document.querySelectorAll('.modal-overlay').forEach(modal => {
+    document.querySelectorAll('.modal-overlay, .ai-modal-overlay').forEach(modal => {
         modal.classList.remove('active');
     });
     document.body.style.overflow = '';
     // Clear post ad state
     uploadedImages = [];
     imagePreviewsContainer.innerHTML = '';
+    const btn = document.getElementById('btn-ai-assist-trigger');
+    if (btn) btn.disabled = true;
 }
 
 // Image File Upload and Base64 Conversion
 function handleImageUpload(e) {
     const files = Array.from(e.target.files);
     
+    let processedCount = 0;
     files.forEach(file => {
         if (!file.type.startsWith('image/')) return;
         
@@ -593,6 +669,12 @@ function handleImageUpload(e) {
                 <button type="button" class="img-preview-remove" onclick="removeUploadedImage(event, '${base64Url}')">&times;</button>
             `;
             imagePreviewsContainer.appendChild(preview);
+            
+            processedCount++;
+            if (processedCount > 0) {
+                const btn = document.getElementById('btn-ai-assist-trigger');
+                if (btn) btn.disabled = false;
+            }
         };
         reader.readAsDataURL(file);
     });
@@ -615,6 +697,9 @@ function removeUploadedImage(e, url) {
         `;
         imagePreviewsContainer.appendChild(preview);
     });
+    
+    const btn = document.getElementById('btn-ai-assist-trigger');
+    if (btn) btn.disabled = (uploadedImages.length === 0);
 }
 
 // Handle posting a new ad
@@ -645,7 +730,8 @@ function handlePostAdSubmit(e) {
         seller: {
             name: "Вы",
             phone,
-            rating: 5.0
+            rating: 5.0,
+            verified: localStorage.getItem('lalafo_user_verified') === 'true'
         },
         vip: false
     };
@@ -704,7 +790,15 @@ function openAdDetails(ad) {
                         <div class="seller-card">
                             <div class="seller-avatar">${ad.seller.name.charAt(0).toUpperCase()}</div>
                             <div class="seller-details">
-                                <h4>${ad.seller.name}</h4>
+                                <h4 style="display: flex; align-items: center; gap: 4px;">
+                                    ${ad.seller.name}
+                                    ${ad.seller.verified ? `
+                                    <span class="verified-badge-icon" title="Проверенный продавец">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                    </span>` : ''}
+                                </h4>
                                 <div class="seller-rating">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
@@ -789,7 +883,15 @@ function openChatWithSeller(ad) {
     const seller = ad.seller;
     
     // Set Header
-    document.getElementById('chat-seller-name').textContent = seller.name;
+    document.getElementById('chat-seller-name').innerHTML = `
+        ${seller.name}
+        ${seller.verified ? `
+        <span class="verified-badge-icon" style="color: #60a5fa; margin-left: 2px;" title="Проверенный продавец">
+            <svg viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+        </span>` : ''}
+    `;
     document.getElementById('chat-seller-avatar').textContent = seller.name.charAt(0).toUpperCase();
 
     // Load or Init History
@@ -866,9 +968,676 @@ function sendChatMessage() {
     }, 1500);
 }
 
+/* --- AI Assistant & Seller Verification Logic --- */
+
+// State variables
+let currentVerificationStep = 1;
+let verifyDocBase64 = "";
+let bioStream = null;
+let aiGeneratedAdData = null;
+
+// Template data for AI Generation
+const AI_TEMPLATES = {
+    iphone: {
+        title: "iPhone 15 Pro Max 256GB Natural Titanium, новый",
+        price: 89000,
+        category: "electronics",
+        desc: "Продаю абсолютно новый iPhone 15 Pro Max на 256 ГБ.\nЦвет: Натуральный титан.\nСостояние: 10/10, коробка запечатана, не вскрывался.\nОригинальное качество, привезен из Дубая. Официальная гарантия 1 год от Apple. В подарок отдам защитное стекло и премиум силиконовый чехол."
+    },
+    bmw: {
+        title: "BMW M4 Competition Coupe 3.0, 2022 год",
+        price: 5800000,
+        category: "cars",
+        desc: "Продается заряженная BMW M4 Competition Coupe.\nГод выпуска: 2022.\nПробег: 12,500 км.\nДвигатель: 3.0 л (510 л.с.) Twin-Turbo.\nЦвет: Brooklyn Grey (серый матовый).\nСостояние идеальное, без сколов и царапин. Кузов полностью в бронепленке. Обслуживание проводилось строго каждые 5000 км в официальном дилерском центре. Салон — кожа Merino. Богатая комплектация с карбоновыми ковшами."
+    },
+    flat: {
+        title: "2-комнатная квартира, 60 м², 5/12 этаж, дизайнерский ремонт",
+        price: 6500000,
+        category: "realestate",
+        desc: "Продается просторная и светлая двухкомнатная квартира в элитном жилом комплексе.\nРайон: Южная Магистраль / ул. Баха.\nЭтаж: 5 из 12.\nПлощадь: 60 кв.м.\nВ квартире выполнен качественный дизайнерский ремонт по индивидуальному проекту. Теплые полы во всех комнатах, качественная сантехника Grohe. Полностью меблирована и оснащена встроенной бытовой техникой от Bosch. Отличный вид из окна, охраняемый закрытый двор."
+    },
+    sofa: {
+        title: "Мягкий велюровый диван в гостиную, новый",
+        price: 25000,
+        category: "homegarden",
+        desc: "Продается новый раскладной диван высокого качества.\nОбивка: премиальный износостойкий велюр изумрудного цвета, приятный на ощупь и легкий в уходе.\nКаркас: натуральное дерево (сосна) и прочный металлокаркас.\nРазмеры: в сложенном виде — 215х95 см, спальное место — 190х140 см.\nНаполнитель: ортопедический независимый пружинный блок. Имеется глубокий ящик для постельного белья. Доставка по Бишкеку бесплатная!"
+    },
+    jacket: {
+        title: "Кожаная куртка Zara Man, размер L, идеальное состояние",
+        price: 4200,
+        category: "fashion",
+        desc: "Продаю мужскую куртку Zara.\nКоллекция прошлого сезона.\nМатериал: высококачественная мягкая эко-кожа.\nРазмер: L (48-50).\nСостояние новой вещи, надевалась от силы 3-4 раза. Причина продажи — не подошел размер в плечах после зимы. Качественные молнии и фурнитура, стильный крой косухи."
+    },
+    bike: {
+        title: "Горный велосипед Giant Talon 3, колеса 29\"",
+        price: 32000,
+        category: "homegarden",
+        desc: "Продаю отличный полупрофессиональный горный велосипед Giant Talon 3.\nРазмер рамы: M (на рост 170-182 см).\nКолеса: 29 дюймов с двойными ободами.\nСкорости: 24 (навесное оборудование Shimano Altus).\nТормоза: дисковые гидравлические Tektro (тормозят отлично в любую погоду).\nУстановлена амортизационная вилка SR Suntour XCT с регулировкой жесткости и блокировкой хода. Велосипед полностью настроен, смазан и готов к сезону."
+    }
+};
+
+// --- Verification functions ---
+
+function updateVerificationHeader() {
+    const isVerified = localStorage.getItem('lalafo_user_verified') === 'true';
+    const verifyBtn = document.getElementById('verify-profile-btn');
+    const verifyText = document.getElementById('verify-btn-text');
+    
+    if (verifyBtn && verifyText) {
+        if (isVerified) {
+            verifyBtn.classList.add('verified');
+            verifyText.textContent = "Проверен";
+            verifyBtn.querySelector('.verification-btn-icon').innerHTML = `
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+            `;
+        } else {
+            verifyBtn.classList.remove('verified');
+            verifyText.textContent = "Верификация";
+            verifyBtn.querySelector('.verification-btn-icon').innerHTML = `
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M18 21a6 6 0 0 0-12 0"></path>
+            `;
+        }
+    }
+}
+
+function openVerificationModal() {
+    const isVerified = localStorage.getItem('lalafo_user_verified') === 'true';
+    const modal = document.getElementById('verification-modal');
+    
+    if (isVerified) {
+        // If verified, display verified summary with reset option
+        const verifyBody = modal.querySelector('.verify-body');
+        const verifyFooter = document.getElementById('verify-footer-actions');
+        
+        modal.querySelector('.verify-steps').style.display = 'none';
+        modal.querySelector('.verify-header p').textContent = "Ваш аккаунт имеет статус подтвержденного.";
+        
+        verifyBody.innerHTML = `
+            <div class="verify-success-box" style="animation: fadeIn 0.4s ease;">
+                <div class="verify-success-seal" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                </div>
+                <h3 style="font-size: 20px; font-weight: 700; color: #3b82f6; margin-bottom: 8px;">Вы проверенный продавец</h3>
+                <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.5; max-width: 400px; margin: 0 auto 24px;">
+                    Ваш паспорт и биометрические данные успешно подтверждены. Покупатели видят значок верификации у ваших объявлений.
+                </p>
+                <button type="button" class="btn-ai-cancel" id="btn-reset-verification-test" style="border-color: var(--danger); color: var(--danger); font-size: 13px; padding: 10px 20px;">
+                    Сбросить верификацию (для теста)
+                </button>
+            </div>
+        `;
+        
+        verifyFooter.innerHTML = `
+            <button class="btn-ai-apply" style="margin-top: 0; width: 100%;" onclick="document.getElementById('verification-modal').classList.remove('active')">Понятно</button>
+        `;
+        
+        openModal(modal);
+        
+        // Bind reset button
+        document.getElementById('btn-reset-verification-test').addEventListener('click', () => {
+            localStorage.removeItem('lalafo_user_verified');
+            // Reset all user ads in localStorage
+            ads.forEach(ad => {
+                if (ad.seller.name === "Вы") {
+                    ad.seller.verified = false;
+                }
+            });
+            localStorage.setItem('lalafo_ads', JSON.stringify(ads));
+            
+            updateVerificationHeader();
+            renderAds();
+            closeActiveModals();
+            alert("Статус верификации сброшен. Вы можете пройти её снова.");
+        });
+        
+    } else {
+        // Restore standard wizard layout
+        const modalHtml = document.getElementById('verification-modal');
+        // Restore steps display
+        modalHtml.querySelector('.verify-steps').style.display = 'flex';
+        modalHtml.querySelector('.verify-header p').textContent = "Подтвердите личность, чтобы получить бейдж «Проверенный продавец» и повысить доверие покупателей.";
+        
+        // Reset steps content HTML
+        restoreVerificationWizardUI();
+        
+        currentVerificationStep = 1;
+        showVerificationStep(1);
+        openModal(modalHtml);
+    }
+}
+
+function restoreVerificationWizardUI() {
+    const modal = document.getElementById('verification-modal');
+    const verifyBody = modal.querySelector('.verify-body');
+    const verifyFooter = document.getElementById('verify-footer-actions');
+    
+    verifyBody.innerHTML = `
+        <!-- Step 1: Personal Data Form -->
+        <div class="verify-step-content active" id="verify-step-1">
+            <div class="form-group">
+                <label for="verify-name">ФИО полностью *</label>
+                <input type="text" id="verify-name" placeholder="Например: Саматов Нурбек Асанович" required>
+            </div>
+            <div class="form-group">
+                <label for="verify-dob">Дата рождения *</label>
+                <input type="date" id="verify-dob" required>
+            </div>
+            <div class="form-group">
+                <label for="verify-doc-type">Тип документа *</label>
+                <select id="verify-doc-type" required>
+                    <option value="id-card">ID-карта (паспорт КР)</option>
+                    <option value="passport">Заграничный паспорт</option>
+                    <option value="driver">Водительское удостоверение</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Step 2: Document Upload Simulation -->
+        <div class="verify-step-content" id="verify-step-2">
+            <p style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary);">
+                Загрузите качественное фото лицевой стороны вашего документа. Все данные должны быть четко различимы.
+            </p>
+            <div class="document-upload-mock" id="document-upload-trigger" onclick="document.getElementById('verify-doc-input').click()">
+                <div class="document-icon-box">📂</div>
+                <p style="font-size: 14px; font-weight: 500; margin-bottom: 4px;" id="verify-doc-status-title">Выбрать файл документа</p>
+                <p style="font-size: 11px; color: var(--text-muted);">Поддерживаются форматы JPG, PNG до 10 МБ</p>
+                <input type="file" id="verify-doc-input" accept="image/*" style="display: none;" onchange="handleVerifyDocUpload(this)">
+            </div>
+            <div id="verify-doc-preview-container" style="display: none; margin-top: 16px; position: relative; border-radius: 8px; overflow: hidden; height: 160px; border: 1px solid var(--border-color);">
+                <img id="verify-doc-preview" src="" style="width: 100%; height: 100%; object-fit: cover;">
+                <button type="button" id="verify-doc-remove" onclick="removeVerifyDoc()" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;">&times;</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Biometrics Simulation -->
+        <div class="verify-step-content" id="verify-step-3">
+            <p style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-align: center;">
+                Поместите лицо в рамку и посмотрите прямо в камеру для сверки биометрии.
+            </p>
+            <div class="biometric-scanner">
+                <div class="bio-avatar-mock" id="bio-avatar-icon">👤</div>
+                <div class="bio-scanning-ring"></div>
+                <div class="bio-scan-line" id="bio-scan-line-element" style="display: none;"></div>
+                <div class="bio-face-dots"></div>
+                <!-- Mock Video Stream -->
+                <video id="bio-video-mock" style="display: none; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></video>
+            </div>
+            <div style="text-align: center;">
+                <button type="button" class="btn-search" id="btn-start-biometrics" onclick="startBiometricScan()" style="padding: 10px 24px; font-size: 14px;">
+                    Начать сканирование лица
+                </button>
+            </div>
+        </div>
+        
+        <!-- Step 4: AI Analysis Loading Screen -->
+        <div class="verify-step-content" id="verify-step-4" style="text-align: center; padding: 40px 0;">
+            <div class="ai-status-loader"></div>
+            <h3 class="ai-status-title" style="margin-top: 16px;" id="verify-progress-title">Нейросеть обрабатывает данные</h3>
+            <p class="ai-status-desc" id="verify-progress-desc">Считываем MRZ-зону и проверяем подлинность паспорта...</p>
+            <div style="width: 100%; background: var(--bg-tertiary); height: 6px; border-radius: 3px; margin-top: 24px; overflow: hidden;">
+                <div id="verify-progress-bar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+        
+        <!-- Step 5: Success screen -->
+        <div class="verify-step-content" id="verify-step-5">
+            <div class="verify-success-box">
+                <div class="verify-success-seal">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                </div>
+                <h3 style="font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 8px;">Личность успешно подтверждена!</h3>
+                <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.5; max-width: 400px; margin: 0 auto 16px;">
+                    Поздравляем! Ваш профиль успешно прошел проверку. Теперь рядом с вашим именем будет отображаться бейдж <strong>«Проверенный продавец»</strong>.
+                </p>
+                <span class="verified-badge-inline" style="font-size: 14px; padding: 6px 16px;">
+                    <svg class="verified-badge-icon" style="margin-left: 0; margin-right: 4px; color: #3b82f6; width: 18px; height: 18px;" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    Проверенный продавец
+                </span>
+            </div>
+        </div>
+    `;
+    
+    verifyFooter.innerHTML = `
+        <button class="btn-ai-cancel" id="verify-prev-btn" style="display: none;" onclick="handleVerifyPrevStep()">Назад</button>
+        <button class="btn-ai-apply" id="verify-next-btn" style="margin-top: 0; width: auto; min-width: 140px;" onclick="handleVerifyNextStep()">Далее</button>
+    `;
+    
+    // reset variables
+    verifyDocBase64 = "";
+    if (bioStream) {
+        stopBioVideo();
+    }
+}
+
+function showVerificationStep(step) {
+    // Hide all contents
+    document.querySelectorAll('.verify-step-content').forEach(c => c.classList.remove('active'));
+    // Show current
+    const targetContent = document.getElementById(`verify-step-${step}`);
+    if (targetContent) targetContent.classList.add('active');
+    
+    // Update step markers
+    for (let i = 1; i <= 3; i++) {
+        const node = document.getElementById(`verify-step-node-${i}`);
+        if (!node) continue;
+        
+        node.classList.remove('active', 'completed');
+        if (i === step) {
+            node.classList.add('active');
+        } else if (i < step) {
+            node.classList.add('completed');
+        }
+    }
+    
+    // Update footer actions
+    const prevBtn = document.getElementById('verify-prev-btn');
+    const nextBtn = document.getElementById('verify-next-btn');
+    const footer = document.getElementById('verify-footer-actions');
+    
+    if (step === 1) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'block';
+        nextBtn.textContent = 'Далее';
+    } else if (step === 2) {
+        prevBtn.style.display = 'block';
+        nextBtn.style.display = 'block';
+        nextBtn.textContent = 'Далее';
+    } else if (step === 3) {
+        prevBtn.style.display = 'block';
+        nextBtn.style.display = 'block';
+        nextBtn.textContent = 'Подтвердить биометрию';
+        nextBtn.disabled = true; // Disabled until biometric scanning finishes
+    } else if (step === 4) {
+        // Scanning loader, hide footer buttons
+        footer.style.display = 'none';
+    } else if (step === 5) {
+        // Success screen, show Close button
+        footer.style.display = 'flex';
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'block';
+        nextBtn.textContent = 'Завершить';
+        nextBtn.disabled = false;
+        nextBtn.style.width = '100%';
+    }
+}
+
+function handleVerifyPrevStep() {
+    if (currentVerificationStep > 1 && currentVerificationStep <= 3) {
+        currentVerificationStep--;
+        showVerificationStep(currentVerificationStep);
+    }
+}
+
+function handleVerifyNextStep() {
+    if (currentVerificationStep === 1) {
+        // Validate name and date
+        const name = document.getElementById('verify-name').value.trim();
+        const dob = document.getElementById('verify-dob').value;
+        
+        if (!name || !dob) {
+            alert("Пожалуйста, заполните ФИО и дату рождения.");
+            return;
+        }
+        
+        currentVerificationStep = 2;
+        showVerificationStep(2);
+    } else if (currentVerificationStep === 2) {
+        // Validate doc upload
+        if (!verifyDocBase64) {
+            alert("Пожалуйста, загрузите фотографию документа.");
+            return;
+        }
+        
+        currentVerificationStep = 3;
+        showVerificationStep(3);
+    } else if (currentVerificationStep === 3) {
+        // User clicks verify biometric, this goes to AI analysis loader
+        currentVerificationStep = 4;
+        showVerificationStep(4);
+        runVerifyAIAnalysis();
+    } else if (currentVerificationStep === 5) {
+        // Success step finish
+        localStorage.setItem('lalafo_user_verified', 'true');
+        
+        // Update user submitted ads
+        ads.forEach(ad => {
+            if (ad.seller.name === "Вы") {
+                ad.seller.verified = true;
+            }
+        });
+        localStorage.setItem('lalafo_ads', JSON.stringify(ads));
+        
+        updateVerificationHeader();
+        renderAds();
+        closeActiveModals();
+    }
+}
+
+function handleVerifyDocUpload(inputEl) {
+    const file = inputEl.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        verifyDocBase64 = e.target.result;
+        
+        // Show preview
+        document.getElementById('verify-doc-preview').src = verifyDocBase64;
+        document.getElementById('verify-doc-preview-container').style.display = 'block';
+        document.getElementById('document-upload-trigger').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeVerifyDoc() {
+    verifyDocBase64 = "";
+    document.getElementById('verify-doc-preview').src = "";
+    document.getElementById('verify-doc-preview-container').style.display = 'none';
+    document.getElementById('document-upload-trigger').style.display = 'block';
+    
+    // clear input value
+    const input = document.getElementById('verify-doc-input');
+    if (input) input.value = "";
+}
+
+function startBiometricScan() {
+    const video = document.getElementById('bio-video-mock');
+    const avatar = document.getElementById('bio-avatar-icon');
+    const scanLine = document.getElementById('bio-scan-line-element');
+    const btn = document.getElementById('btn-start-biometrics');
+    
+    btn.disabled = true;
+    btn.textContent = "Идет сканирование...";
+    scanLine.style.display = 'block';
+    
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            bioStream = stream;
+            video.srcObject = stream;
+            video.play();
+            video.style.display = 'block';
+            avatar.style.display = 'none';
+            
+            // Wait 3.5 seconds to scan
+            setTimeout(completeBiometricScan, 3500);
+        })
+        .catch(err => {
+            console.log("Camera access not available, using silhouette simulator", err);
+            // Fallback: visual effect
+            avatar.style.color = '#3b82f6';
+            avatar.style.animation = 'pulse 1s infinite alternate';
+            
+            setTimeout(completeBiometricScan, 3500);
+        });
+}
+
+function completeBiometricScan() {
+    stopBioVideo();
+    const btn = document.getElementById('btn-start-biometrics');
+    btn.textContent = "Сканирование завершено!";
+    btn.style.background = 'var(--accent)';
+    btn.style.color = 'white';
+    
+    // Enable the "Next" button
+    const nextBtn = document.getElementById('verify-next-btn');
+    if (nextBtn) nextBtn.disabled = false;
+}
+
+function stopBioVideo() {
+    const video = document.getElementById('bio-video-mock');
+    if (video) {
+        video.pause();
+        video.srcObject = null;
+        video.style.display = 'none';
+    }
+    const avatar = document.getElementById('bio-avatar-icon');
+    if (avatar) {
+        avatar.style.display = 'flex';
+        avatar.style.animation = '';
+        avatar.style.color = '';
+    }
+    const scanLine = document.getElementById('bio-scan-line-element');
+    if (scanLine) scanLine.style.display = 'none';
+    
+    if (bioStream) {
+        bioStream.getTracks().forEach(track => track.stop());
+        bioStream = null;
+    }
+}
+
+function runVerifyAIAnalysis() {
+    const progressBar = document.getElementById('verify-progress-bar');
+    const progressTitle = document.getElementById('verify-progress-title');
+    const progressDesc = document.getElementById('verify-progress-desc');
+    
+    progressBar.style.width = '0%';
+    let width = 0;
+    
+    const interval = setInterval(() => {
+        width += 2;
+        progressBar.style.width = `${width}%`;
+        
+        if (width < 30) {
+            progressTitle.textContent = "Сканирование паспорта...";
+            progressDesc.textContent = "Считываем MRZ-зону документа, извлекаем имя и фотографию...";
+        } else if (width < 60) {
+            progressTitle.textContent = "Верификация биометрии...";
+            progressDesc.textContent = "Производим сопоставление лица с биометрическим сканом камеры...";
+        } else if (width < 90) {
+            progressTitle.textContent = "Проверка по государственным реестрам...";
+            progressDesc.textContent = "Запрос в ЕГРН и базу активных документов МВД КР...";
+        } else {
+            progressTitle.textContent = "Финальное подтверждение нейросетью...";
+            progressDesc.textContent = "Сбор цифровой подписи верификации...";
+        }
+        
+        if (width >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+                currentVerificationStep = 5;
+                showVerificationStep(5);
+            }, 500);
+        }
+    }, 80);
+}
+
+// --- AI Ad Assistant logic ---
+
+function runAIAssistant() {
+    if (uploadedImages.length === 0) {
+        alert("Пожалуйста, сначала загрузите хотя бы одну фотографию!");
+        return;
+    }
+    
+    const modal = document.getElementById('ai-assistant-modal');
+    const previewImg = document.getElementById('ai-scanner-preview-img');
+    
+    // Set preview image
+    previewImg.src = uploadedImages[0];
+    
+    // Show scanning panel
+    document.getElementById('ai-screen-scanning').style.display = 'block';
+    document.getElementById('ai-screen-results').style.display = 'none';
+    document.getElementById('ai-object-selector').style.display = 'none';
+    document.getElementById('ai-scan-status-panel').style.display = 'flex';
+    
+    openModal(modal);
+    
+    // Simulate image scanning for 1.8 seconds
+    setTimeout(() => {
+        document.getElementById('ai-scan-status-panel').style.display = 'none';
+        
+        // Show selection selector
+        const selector = document.getElementById('ai-object-selector');
+        selector.style.display = 'block';
+        
+        // Populate choices
+        populateAIChoices();
+    }, 1800);
+}
+
+function populateAIChoices() {
+    const container = document.getElementById('ai-options-container');
+    container.innerHTML = '';
+    
+    // Detect suggested key from filename if possible
+    let suggestedKey = "";
+    const fileInput = document.getElementById('image-upload');
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        const name = fileInput.files[0].name.toLowerCase();
+        if (name.includes("iphone") || name.includes("phone") || name.includes("apple") || name.includes("mob")) suggestedKey = "iphone";
+        else if (name.includes("bmw") || name.includes("car") || name.includes("auto") || name.includes("m4")) suggestedKey = "bmw";
+        else if (name.includes("flat") || name.includes("apartment") || name.includes("house") || name.includes("room") || name.includes("kvartira")) suggestedKey = "flat";
+        else if (name.includes("sofa") || name.includes("couch") || name.includes("divan") || name.includes("mebel")) suggestedKey = "sofa";
+        else if (name.includes("jacket") || name.includes("coat") || name.includes("zara") || name.includes("odezhda")) suggestedKey = "jacket";
+        else if (name.includes("bike") || name.includes("bicycle") || name.includes("giant") || name.includes("velosiped")) suggestedKey = "bike";
+    }
+    
+    const options = [
+        { label: "📱 iPhone 15 Pro Max", key: "iphone" },
+        { label: "🚗 BMW M4 Competition", key: "bmw" },
+        { label: "🏠 Двухкомнатная квартира", key: "flat" },
+        { label: "🛋️ Велюровый диван", key: "sofa" },
+        { label: "🧥 Кожаная куртка Zara", key: "jacket" },
+        { label: "🚲 Велосипед Giant Talon", key: "bike" }
+    ];
+    
+    // Reorder options to put suggested first
+    if (suggestedKey) {
+        const index = options.findIndex(o => o.key === suggestedKey);
+        if (index > -1) {
+            const item = options.splice(index, 1)[0];
+            item.label += " (ИИ рекомендует ✨)";
+            options.unshift(item);
+        }
+    }
+    
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ai-option-btn';
+        if (opt.key === suggestedKey) {
+            btn.style.borderColor = '#8b5cf6';
+            btn.style.background = 'rgba(139, 92, 246, 0.05)';
+            btn.style.fontWeight = '600';
+        }
+        btn.innerHTML = opt.label;
+        btn.addEventListener('click', () => generateAIData(opt.key));
+        container.appendChild(btn);
+    });
+}
+
+function generateAIData(key) {
+    const data = AI_TEMPLATES[key];
+    if (!data) return;
+    
+    aiGeneratedAdData = data;
+    
+    // Switch to results screen
+    document.getElementById('ai-screen-scanning').style.display = 'none';
+    document.getElementById('ai-screen-results').style.display = 'block';
+    
+    // Clear results UI
+    const titleEl = document.getElementById('ai-res-title');
+    const priceEl = document.getElementById('ai-res-price');
+    const categoryEl = document.getElementById('ai-res-category');
+    const descEl = document.getElementById('ai-res-desc');
+    
+    titleEl.textContent = "";
+    priceEl.textContent = "";
+    categoryEl.textContent = "";
+    descEl.textContent = "";
+    
+    // Disable apply button until typed
+    const applyBtn = document.getElementById('ai-res-apply-btn');
+    applyBtn.disabled = true;
+    applyBtn.style.opacity = '0.5';
+    
+    // Typing simulation (multithreaded feel)
+    let titleFinished = false;
+    let priceFinished = false;
+    let descFinished = false;
+    
+    function checkCompletion() {
+        if (titleFinished && priceFinished && descFinished) {
+            applyBtn.disabled = false;
+            applyBtn.style.opacity = '1';
+        }
+    }
+    
+    // Type Title
+    typeTextEffect('ai-res-title', data.title, 8, () => {
+        titleFinished = true;
+        checkCompletion();
+    });
+    
+    // Type Price
+    setTimeout(() => {
+        typeTextEffect('ai-res-price', `${new Intl.NumberFormat('ru-RU').format(data.price)} KGS`, 15, () => {
+            priceFinished = true;
+            checkCompletion();
+        });
+        categoryEl.textContent = getCategoryNameRu(data.category);
+    }, 300);
+    
+    // Type Description
+    setTimeout(() => {
+        typeTextEffect('ai-res-desc', data.desc, 4, () => {
+            descFinished = true;
+            checkCompletion();
+        });
+    }, 600);
+}
+
+function typeTextEffect(elementId, text, speed, callback) {
+    const el = document.getElementById(elementId);
+    el.textContent = "";
+    let index = 0;
+    
+    const timer = setInterval(() => {
+        if (index < text.length) {
+            el.textContent += text.charAt(index);
+            index++;
+        } else {
+            clearInterval(timer);
+            if (callback) callback();
+        }
+    }, speed);
+}
+
+function applyAIGeneratedData() {
+    if (!aiGeneratedAdData) return;
+    
+    // Set form fields
+    document.getElementById('ad-title').value = aiGeneratedAdData.title;
+    document.getElementById('ad-price').value = aiGeneratedAdData.price;
+    document.getElementById('ad-category').value = aiGeneratedAdData.category;
+    document.getElementById('ad-desc').value = aiGeneratedAdData.desc;
+    
+    // Close AI Modal
+    document.getElementById('ai-assistant-modal').classList.remove('active');
+    
+    // Add success toast
+    alert("Данные объявления успешно заполнены искусственным интеллектом!");
+}
+
 // Global scope bindings for inline HTML clicks (e.g. toggleFavorite)
 window.toggleFavorite = toggleFavorite;
 window.removeUploadedImage = removeUploadedImage;
+window.openVerificationModal = openVerificationModal;
+window.handleVerifyPrevStep = handleVerifyPrevStep;
+window.handleVerifyNextStep = handleVerifyNextStep;
+window.handleVerifyDocUpload = handleVerifyDocUpload;
+window.removeVerifyDoc = removeVerifyDoc;
+window.startBiometricScan = startBiometricScan;
+window.updateVerificationHeader = updateVerificationHeader;
 
 // Run App on Load
 window.addEventListener('DOMContentLoaded', init);

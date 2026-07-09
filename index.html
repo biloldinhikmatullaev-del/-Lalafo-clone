@@ -53,6 +53,15 @@
             </div>
 
             <div class="nav-actions">
+                <!-- Profile Verification Trigger -->
+                <button class="nav-verification-btn" id="verify-profile-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="verification-btn-icon">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M18 21a6 6 0 0 0-12 0"></path>
+                    </svg>
+                    <span id="verify-btn-text">Верификация</span>
+                </button>
+
                 <!-- Theme Toggle Button -->
                 <button class="theme-toggle" id="theme-toggle" aria-label="Сменить тему">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -331,6 +340,21 @@
 
                 <div class="form-group">
                     <label>Фотографии</label>
+                    
+                    <!-- AI Helper Callout -->
+                    <div class="ai-helper-container" id="ai-helper-banner">
+                        <div class="ai-helper-info">
+                            <span class="ai-helper-sparkle">✨</span>
+                            <div class="ai-helper-text">
+                                <h4>AI-помощник автозаполнения</h4>
+                                <p>Загрузите фото товара и ИИ сгенерирует заголовок, цену, категорию и подробное описание.</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-ai-generate" id="btn-ai-assist-trigger" disabled>
+                            ✨ Запустить ИИ
+                        </button>
+                    </div>
+
                     <div class="image-upload-area">
                         <div class="upload-icon">&#128247;</div>
                         <p style="font-size: 14px; font-weight: 500; margin-bottom: 4px;">Выберите файлы или перетащите их сюда</p>
@@ -350,6 +374,200 @@
     <!-- Ad Detailed View Modal -->
     <div class="modal-overlay" id="ad-detail-modal">
         <!-- Will be loaded dynamically in app.js -->
+    </div>
+
+    <!-- AI Generation Assistant Modal -->
+    <div class="ai-modal-overlay" id="ai-assistant-modal">
+        <div class="ai-modal-container">
+            <button class="modal-close" id="ai-modal-close">&times;</button>
+            
+            <!-- Scanning Screen -->
+            <div id="ai-screen-scanning">
+                <div class="ai-scanner-box">
+                    <div class="ai-scan-grid"></div>
+                    <div class="ai-scan-markers"></div>
+                    <div class="ai-scan-line"></div>
+                    <img id="ai-scanner-preview-img" class="ai-scan-img" src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600">
+                </div>
+                
+                <div class="ai-status-panel" id="ai-scan-status-panel">
+                    <div class="ai-status-loader"></div>
+                    <h3 class="ai-status-title">ИИ анализирует изображение...</h3>
+                    <p class="ai-status-desc">Распознаем форму, бренд, цвет и возможные характеристики предмета на фото.</p>
+                </div>
+                
+                <!-- Option confirmation (displayed after a short analysis delay) -->
+                <div class="ai-selector-box" id="ai-object-selector" style="display: none;">
+                     <h5>Что изображено на вашем фото?</h5>
+                     <div class="ai-option-grid" id="ai-options-container">
+                         <!-- Loaded dynamically in app.js -->
+                     </div>
+                </div>
+            </div>
+            
+            <!-- Results Screen -->
+            <div id="ai-screen-results" style="display: none;">
+                <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                    <span>✨</span> Результаты генерации ИИ
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 24px;">AI-помощник подготовил готовые данные для вашего объявления. Проверьте их перед публикацией.</p>
+                
+                <div class="ai-results-panel">
+                    <div class="ai-result-group">
+                        <div class="ai-result-label">Название объявления</div>
+                        <div class="ai-result-value" id="ai-res-title">...</div>
+                    </div>
+                    
+                    <div class="ai-result-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <div class="ai-result-label">Категория</div>
+                            <div class="ai-result-value" id="ai-res-category">...</div>
+                        </div>
+                        <div>
+                            <div class="ai-result-label">Рекомендуемая цена</div>
+                            <div class="ai-result-value" id="ai-res-price">...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ai-result-group">
+                        <div class="ai-result-label">Описание</div>
+                        <div class="ai-result-value" id="ai-res-desc">...</div>
+                    </div>
+                </div>
+                
+                <div class="ai-results-actions">
+                    <button class="btn-ai-cancel" id="ai-res-cancel-btn">Отмена</button>
+                    <button class="btn-ai-apply" id="ai-res-apply-btn">Применить автозаполнение</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seller Verification Modal -->
+    <div class="modal-overlay" id="verification-modal">
+        <div class="modal-container verify-modal-container">
+            <button class="modal-close" id="verify-modal-close">&times;</button>
+            
+            <div class="verify-header">
+                <h2>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    Верификация Продавца
+                </h2>
+                <p>Подтвердите личность, чтобы получить бейдж «Проверенный продавец» и повысить доверие покупателей.</p>
+            </div>
+            
+            <div class="verify-steps">
+                <div class="verify-step-node active" id="verify-step-node-1">
+                    <div class="verify-step-circle">1</div>
+                    <span>Данные</span>
+                </div>
+                <div class="verify-step-node" id="verify-step-node-2">
+                    <div class="verify-step-circle">2</div>
+                    <span>Документ</span>
+                </div>
+                <div class="verify-step-node" id="verify-step-node-3">
+                    <div class="verify-step-circle">3</div>
+                    <span>Биометрия</span>
+                </div>
+            </div>
+            
+            <div class="verify-body">
+                <!-- Step 1: Personal Data Form -->
+                <div class="verify-step-content active" id="verify-step-1">
+                    <div class="form-group">
+                        <label for="verify-name">ФИО полностью *</label>
+                        <input type="text" id="verify-name" placeholder="Например: Саматов Нурбек Асанович" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="verify-dob">Дата рождения *</label>
+                        <input type="date" id="verify-dob" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="verify-doc-type">Тип документа *</label>
+                        <select id="verify-doc-type" required>
+                            <option value="id-card">ID-карта (паспорт КР)</option>
+                            <option value="passport">Заграничный паспорт</option>
+                            <option value="driver">Водительское удостовечение</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Document Upload Simulation -->
+                <div class="verify-step-content" id="verify-step-2">
+                    <p style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary);">
+                        Загрузите качественное фото лицевой стороны вашего документа. Все данные должны быть четко различимы.
+                    </p>
+                    <div class="document-upload-mock" id="document-upload-trigger">
+                        <div class="document-icon-box">📂</div>
+                        <p style="font-size: 14px; font-weight: 500; margin-bottom: 4px;" id="verify-doc-status-title">Выбрать файл документа</p>
+                        <p style="font-size: 11px; color: var(--text-muted);">Поддерживаются форматы JPG, PNG до 10 МБ</p>
+                        <input type="file" id="verify-doc-input" accept="image/*" style="display: none;">
+                    </div>
+                    <div id="verify-doc-preview-container" style="display: none; margin-top: 16px; position: relative; border-radius: 8px; overflow: hidden; height: 160px; border: 1px solid var(--border-color);">
+                        <img id="verify-doc-preview" src="" style="width: 100%; height: 100%; object-fit: cover;">
+                        <button type="button" id="verify-doc-remove" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;">&times;</button>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Biometrics Simulation -->
+                <div class="verify-step-content" id="verify-step-3">
+                    <p style="margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); text-align: center;">
+                        Поместите лицо в рамку и посмотрите прямо в камеру для сверки биометрии.
+                    </p>
+                    <div class="biometric-scanner">
+                        <div class="bio-avatar-mock" id="bio-avatar-icon">👤</div>
+                        <div class="bio-scanning-ring"></div>
+                        <div class="bio-scan-line" id="bio-scan-line-element" style="display: none;"></div>
+                        <div class="bio-face-dots"></div>
+                        <!-- Mock Video Stream -->
+                        <video id="bio-video-mock" style="display: none; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></video>
+                    </div>
+                    <div style="text-align: center;">
+                        <button type="button" class="btn-search" id="btn-start-biometrics" style="padding: 10px 24px; font-size: 14px;">
+                            Начать сканирование лица
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 4: AI Analysis Loading Screen -->
+                <div class="verify-step-content" id="verify-step-4" style="text-align: center; padding: 40px 0;">
+                    <div class="ai-status-loader"></div>
+                    <h3 class="ai-status-title" style="margin-top: 16px;" id="verify-progress-title">Нейросеть обрабатывает данные</h3>
+                    <p class="ai-status-desc" id="verify-progress-desc">Считываем MRZ-зону и проверяем подлинность паспорта...</p>
+                    <div style="width: 100%; background: var(--bg-tertiary); height: 6px; border-radius: 3px; margin-top: 24px; overflow: hidden;">
+                        <div id="verify-progress-bar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                </div>
+                
+                <!-- Step 5: Success screen -->
+                <div class="verify-step-content" id="verify-step-5">
+                    <div class="verify-success-box">
+                        <div class="verify-success-seal">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                        </div>
+                        <h3 style="font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 8px;">Личность успешно подтверждена!</h3>
+                        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.5; max-width: 400px; margin: 0 auto 16px;">
+                            Поздравляем! Ваш профиль успешно прошел проверку. Теперь рядом с вашим именем будет отображаться бейдж <strong>«Проверенный продавец»</strong>.
+                        </p>
+                        <span class="verified-badge-inline" style="font-size: 14px; padding: 6px 16px;">
+                            <svg class="verified-badge-icon" style="margin-left: 0; margin-right: 4px; color: #3b82f6; width: 18px; height: 18px;" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            Проверенный продавец
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="verify-footer" id="verify-footer-actions">
+                <button class="btn-ai-cancel" id="verify-prev-btn" style="display: none;">Назад</button>
+                <button class="btn-ai-apply" id="verify-next-btn" style="margin-top: 0; width: auto; min-width: 140px;">Далее</button>
+            </div>
+        </div>
     </div>
 
     <!-- Interactive Simulated Seller Chat -->
