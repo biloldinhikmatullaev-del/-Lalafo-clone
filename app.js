@@ -195,8 +195,35 @@ function init() {
         ads = JSON.parse(storedAds);
     } else {
         ads = [...DEFAULT_ADS];
-        localStorage.setItem('lalafo_ads', JSON.stringify(ads));
     }
+
+    // Ensure all ads have coordinates
+    const defaultCoords = {
+        'ad-1': [42.876, 74.600],
+        'ad-2': [40.525, 72.795],
+        'ad-3': [42.845, 74.585],
+        'ad-4': [40.933, 72.981],
+        'ad-5': [42.868, 74.550],
+        'ad-6': [42.491, 78.389],
+        'ad-7': [42.880, 74.615],
+        'ad-8': [40.505, 72.825]
+    };
+    
+    ads.forEach(ad => {
+        if (!ad.coords) {
+            if (defaultCoords[ad.id]) {
+                ad.coords = defaultCoords[ad.id];
+            } else {
+                const center = ad.city === "Ош" ? [40.514, 72.816] : [42.8746, 74.5698];
+                ad.coords = [
+                    center[0] + (Math.random() - 0.5) * 0.04,
+                    center[1] + (Math.random() - 0.5) * 0.04
+                ];
+            }
+        }
+    });
+
+    localStorage.setItem('lalafo_ads', JSON.stringify(ads));
 
     // Load Favorites
     const storedFavorites = localStorage.getItem('lalafo_favorites');
@@ -515,12 +542,16 @@ function renderAds() {
                 <h3>Объявления не найдены</h3>
                 <p>Ничего не найдено по вашему запросу. Попробуйте изменить параметры поиска.</p>
             </div>`;
-        return;
+    } else {
+        filteredAds.forEach(ad => {
+            adsGrid.appendChild(createAdCard(ad));
+        });
     }
 
-    filteredAds.forEach(ad => {
-        adsGrid.appendChild(createAdCard(ad));
-    });
+    // Sync map markers
+    if (typeof updateMapMarkers === 'function') {
+        updateMapMarkers(filteredAds);
+    }
 }
 
 // Create Ad Card Element
@@ -741,6 +772,11 @@ function handlePostAdSubmit(e) {
     ads.unshift(newAd);
     localStorage.setItem('lalafo_ads', JSON.stringify(ads));
 
+    // Check search subscriptions
+    if (typeof checkNewAdSubscriptions === 'function') {
+        checkNewAdSubscriptions(newAd);
+    }
+
     // Reset Form & Close Modal
     postAdForm.reset();
     closeActiveModals();
@@ -819,22 +855,39 @@ function openAdDetails(ad) {
                                     Написать продавцу
                                 </button>
                                 ${ad.seller.name !== "Вы" ? `
+                                <button class="btn-msg-offer" id="btn-offer-price" style="flex: 0.8; height: 42px; border-radius: 6px; padding: 0 12px; justify-content: center; font-size: 12px;">
+                                    🤝 Торговаться
+                                </button>
                                 <button class="btn-buy-safe" id="btn-buy-safe-deal" style="flex: 1.2;">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
                                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                         <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
                                     </svg>
-                                    Купить через Безопасную сделку
+                                    Купить с Безопасной сделкой
                                 </button>` : ''}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Similar Ads Carousel -->
+            <div class="detail-similar-section">
+                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 12px;">Похожие товары</h3>
+                <div class="similar-ads-carousel" id="similar-ads-carousel">
+                    <!-- Similar items rendered dynamically in JS -->
+                </div>
+            </div>
         </div>
     `;
 
     openModal(adDetailModal);
+
+    // Track category viewed for user interest mapping
+    trackUserInterest(ad.category);
+
+    // Render similar ads in this modal
+    renderSimilarAds(ad);
 
     // Bind inside-modal events
     const closeBtn = adDetailModal.querySelector('.modal-close');
@@ -879,6 +932,24 @@ function openAdDetails(ad) {
         buySafeBtn.addEventListener('click', () => {
             closeActiveModals();
             openSafeDealCheckout(ad);
+        });
+    }
+
+    // Offer Price Action
+    const offerPriceBtn = adDetailModal.querySelector('#btn-offer-price');
+    if (offerPriceBtn) {
+        offerPriceBtn.addEventListener('click', () => {
+            const suggested = Math.round(ad.price * 0.9);
+            const offerStr = prompt(`Предложить цену для "${ad.title}" (Текущая цена: ${ad.price} KGS):\n(ИИ рекомендует предложить от ${Math.round(ad.price * 0.8)} KGS)`, suggested);
+            if (offerStr === null) return;
+            const offerAmount = parseInt(offerStr.replace(/\s+/g, '').replace(/[^0-9]/gi, ''), 10);
+            if (isNaN(offerAmount) || offerAmount <= 0) {
+                alert("Пожалуйста, введите корректную сумму.");
+                return;
+            }
+            closeActiveModals();
+            openChatWithSeller(ad);
+            sendBargainOffer(ad, offerAmount);
         });
     }
 }
@@ -939,20 +1010,46 @@ function renderChatMessages(adId) {
 
     messages.forEach((msg, idx) => {
         const div = document.createElement('div');
-        div.className = `msg ${msg.sender === 'seller' ? 'received' : 'sent'}`;
         
-        const isReceived = msg.sender === 'seller';
-
-        div.innerHTML = `
-            <div class="msg-text">${msg.text}</div>
-            ${isReceived ? `
-            <div class="msg-actions-toolbar">
-                <button type="button" class="btn-msg-translate" onclick="translateMessage(this, ${idx}, '${adId}')">
-                    🌐 Перевести
-                </button>
-            </div>` : ''}
-            <div style="font-size: 9px; opacity: 0.6; text-align: right; margin-top: 4px;">${msg.time}</div>
-        `;
+        if (msg.isOffer) {
+            div.className = `msg sent`;
+            div.innerHTML = `
+                <div class="msg-offer-bubble">
+                    <div class="msg-offer-header">🤝 Предложение цены</div>
+                    <div class="msg-offer-body">
+                        <span class="msg-offer-amount">${new Intl.NumberFormat('ru-RU').format(msg.offerAmount)} KGS</span>
+                        <span class="msg-offer-status pending">Ожидает ответа</span>
+                    </div>
+                </div>
+                <div style="font-size: 9px; opacity: 0.6; text-align: right; margin-top: 4px;">${msg.time}</div>
+            `;
+        } else if (msg.isInteractiveBargain) {
+            div.className = `msg received`;
+            div.innerHTML = `
+                <div class="msg-offer-bubble">
+                    <div class="msg-offer-header" style="color: #10b981;">🤝 Решение по цене</div>
+                    <div class="msg-offer-body">
+                        <span class="msg-offer-amount">${new Intl.NumberFormat('ru-RU').format(msg.finalPrice)} KGS</span>
+                        <span class="msg-offer-status accepted">${msg.statusText}</span>
+                        <button type="button" class="btn-buy-discounted" onclick="buyDiscountedAd('${adId}', ${msg.finalPrice})">Купить со скидкой</button>
+                    </div>
+                </div>
+                <div style="font-size: 9px; opacity: 0.6; text-align: right; margin-top: 4px;">${msg.time}</div>
+            `;
+        } else {
+            div.className = `msg ${msg.sender === 'seller' ? 'received' : 'sent'}`;
+            const isReceived = msg.sender === 'seller';
+            div.innerHTML = `
+                <div class="msg-text">${msg.text}</div>
+                ${isReceived ? `
+                <div class="msg-actions-toolbar">
+                    <button type="button" class="btn-msg-translate" onclick="translateMessage(this, ${idx}, '${adId}')">
+                        🌐 Перевести
+                    </button>
+                </div>` : ''}
+                <div style="font-size: 9px; opacity: 0.6; text-align: right; margin-top: 4px;">${msg.time}</div>
+            `;
+        }
         chatMessages.appendChild(div);
     });
 
@@ -1685,6 +1782,25 @@ function setupEscrowAndChatUpgrades() {
         localStorage.setItem('lalafo_safe_deals', JSON.stringify(safeDeals));
     }
 
+    // Load Notifications & Subscriptions
+    const storedNotifs = localStorage.getItem('lalafo_notifications');
+    if (storedNotifs) {
+        notifications = JSON.parse(storedNotifs);
+    } else {
+        notifications = [];
+        localStorage.setItem('lalafo_notifications', JSON.stringify(notifications));
+    }
+    updateNotificationBadge();
+    renderNotificationsList();
+
+    const storedSubs = localStorage.getItem('lalafo_subscriptions');
+    if (storedSubs) {
+        subscriptions = JSON.parse(storedSubs);
+    } else {
+        subscriptions = [];
+        localStorage.setItem('lalafo_subscriptions', JSON.stringify(subscriptions));
+    }
+
     // Checkout modal event listeners
     const checkoutClose = document.getElementById('checkout-modal-close');
     if (checkoutClose) {
@@ -1761,6 +1877,104 @@ function setupEscrowAndChatUpgrades() {
             sendChatMessage();
         });
     }
+
+    // View toggles: Grid vs Map
+    const toggleGridView = document.getElementById('toggle-grid-view');
+    const toggleMapView = document.getElementById('toggle-map-view');
+    
+    if (toggleGridView && toggleMapView) {
+        toggleGridView.addEventListener('click', () => {
+            toggleGridView.classList.add('active');
+            toggleMapView.classList.remove('active');
+            document.getElementById('map-view-container').style.display = 'none';
+            document.getElementById('ads-grid').style.display = 'grid';
+        });
+
+        toggleMapView.addEventListener('click', () => {
+            toggleMapView.classList.add('active');
+            toggleGridView.classList.remove('active');
+            document.getElementById('ads-grid').style.display = 'none';
+            document.getElementById('map-view-container').style.display = 'block';
+            initMapView();
+        });
+    }
+
+    // Notification dropdown toggler
+    const bellBtn = document.getElementById('notif-bell-btn');
+    const notifDropdown = document.getElementById('notif-dropdown');
+    
+    if (bellBtn && notifDropdown) {
+        bellBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifDropdown.classList.toggle('active');
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (!notifDropdown.contains(e.target) && e.target !== bellBtn) {
+                notifDropdown.classList.remove('active');
+            }
+        });
+    }
+
+    // Clear notifications button
+    const clearNotifBtn = document.getElementById('notif-clear-all');
+    if (clearNotifBtn) {
+        clearNotifBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifications = [];
+            localStorage.setItem('lalafo_notifications', JSON.stringify(notifications));
+            updateNotificationBadge();
+            renderNotificationsList();
+        });
+    }
+
+    // Search subscription button click
+    const subSearchBtn = document.getElementById('subscribe-search-btn');
+    if (subSearchBtn) {
+        subSearchBtn.addEventListener('click', () => {
+            const query = document.getElementById('filter-search').value.trim();
+            const category = document.getElementById('filter-category').value;
+            const city = document.getElementById('filter-city').value;
+            const minPrice = document.getElementById('filter-min-price').value;
+            const maxPrice = document.getElementById('filter-max-price').value;
+
+            // Check if already subscribed to same filters
+            const existingSubIdx = subscriptions.findIndex(s => 
+                s.query === query && 
+                s.category === category && 
+                s.city === city && 
+                s.minPrice === minPrice && 
+                s.maxPrice === maxPrice
+            );
+
+            if (existingSubIdx > -1) {
+                // Unsubscribe
+                subscriptions.splice(existingSubIdx, 1);
+                subSearchBtn.classList.remove('subscribed');
+                subSearchBtn.querySelector('span').textContent = "Подписаться на поиск";
+                localStorage.setItem('lalafo_subscriptions', JSON.stringify(subscriptions));
+                alert("Вы отписались от этого поиска.");
+            } else {
+                // Subscribe
+                const newSub = {
+                    id: `sub-${Date.now()}`,
+                    query,
+                    category,
+                    city,
+                    minPrice,
+                    maxPrice
+                };
+                subscriptions.push(newSub);
+                subSearchBtn.classList.add('subscribed');
+                subSearchBtn.querySelector('span').textContent = "Вы подписаны 🔔";
+                localStorage.setItem('lalafo_subscriptions', JSON.stringify(subscriptions));
+                alert("Вы успешно подписались на этот поиск! При появлении подходящих товаров вы получите уведомление в шапке сайта.");
+            }
+        });
+    }
+
+    // Render Home Recommendations on page load
+    renderHomeRecommendations();
 }
 
 // Open checkout panel
@@ -2064,6 +2278,407 @@ function translateMessage(btnEl, msgIdx, adId) {
     }, 800);
 }
 
+/* --- Maps, Bargaining, Search Subscriptions & Recommendations Logic --- */
+
+let mapObj = null;
+let mapMarkers = [];
+let subscriptions = [];
+let notifications = [];
+
+// Interactive Map View initialization
+function initMapView() {
+    // Wait until Leaflet library is loaded
+    if (typeof L === 'undefined') {
+        setTimeout(initMapView, 100);
+        return;
+    }
+
+    if (!mapObj) {
+        // Center of Bishkek initially
+        mapObj = L.map('map-view-container').setView([42.8746, 74.5698], 12);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mapObj);
+        
+        // Re-invalidate map size when showing it so Leaflet displays tiles correctly
+        setTimeout(() => {
+            mapObj.invalidateSize();
+        }, 100);
+    } else {
+        // Trigger resize invalidate
+        mapObj.invalidateSize();
+    }
+    
+    // Fit map to markers
+    updateMapMarkers(getFilteredAds(false));
+}
+
+// Update markers on Leaflet map
+function updateMapMarkers(filteredAds) {
+    if (!mapObj) return;
+
+    // Clear existing markers
+    mapMarkers.forEach(m => mapObj.removeLayer(m));
+    mapMarkers = [];
+
+    if (filteredAds.length === 0) return;
+
+    const group = [];
+    filteredAds.forEach(ad => {
+        if (ad.coords) {
+            // Create Leaflet marker
+            const marker = L.marker(ad.coords).addTo(mapObj);
+            
+            const popupHtml = `
+                <div class="map-popup-card">
+                    <img src="${ad.images[0]}" class="map-popup-img" onerror="this.src='https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=300'">
+                    <div class="map-popup-info">
+                        <div class="map-popup-title">${ad.title}</div>
+                        <div class="map-popup-price">${new Intl.NumberFormat('ru-RU').format(ad.price)} KGS</div>
+                        <button class="map-popup-btn" onclick="openAdFromMap('${ad.id}')">Посмотреть</button>
+                    </div>
+                </div>
+            `;
+            marker.bindPopup(popupHtml);
+            mapMarkers.push(marker);
+            group.push(ad.coords);
+        }
+    });
+
+    // Zoom out or auto-fit bounds
+    if (group.length > 0) {
+        mapObj.fitBounds(group, { padding: [40, 40], maxZoom: 14 });
+    }
+}
+
+// Open detailed modal from map marker click
+function openAdFromMap(adId) {
+    const ad = ads.find(a => a.id === adId);
+    if (!ad) return;
+    openAdDetails(ad);
+}
+
+// Notifications badge updates
+function updateNotificationBadge() {
+    const badge = document.getElementById('notif-badge-count');
+    if (!badge) return;
+    
+    const count = notifications.length;
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Render Notifications inside Dropdown
+function renderNotificationsList() {
+    const listContainer = document.getElementById('notif-list-container');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = "";
+
+    if (notifications.length === 0) {
+        listContainer.innerHTML = `<div class="notif-empty">Нет новых уведомлений</div>`;
+        return;
+    }
+
+    notifications.forEach(notif => {
+        const item = document.createElement('div');
+        item.className = 'notif-item';
+        item.onclick = (e) => {
+            e.stopPropagation();
+            openAdFromNotification(notif.adId, notif.id);
+        };
+
+        item.innerHTML = `
+            <img src="${notif.image}" class="notif-img" onerror="this.src='https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=100'">
+            <div class="notif-details">
+                <p style="font-weight: 700; font-size: 11px; margin-bottom: 2px; color: var(--accent);">${notif.title}</p>
+                <p style="color: var(--text-primary); font-size: 11px; font-weight: 600;">${notif.message}</p>
+                <div class="notif-time">${notif.time}</div>
+            </div>
+        `;
+        listContainer.appendChild(item);
+    });
+}
+
+// Check if new ad matches search subscriptions
+function checkNewAdSubscriptions(ad) {
+    let triggered = false;
+    
+    subscriptions.forEach(sub => {
+        // Match Search Query
+        if (sub.query && !ad.title.toLowerCase().includes(sub.query.toLowerCase())) return;
+        
+        // Match Category
+        if (sub.category && ad.category !== sub.category) return;
+        
+        // Match City
+        if (sub.city && ad.city !== sub.city) return;
+        
+        // Match Min Price
+        if (sub.minPrice && ad.price < parseInt(sub.minPrice, 10)) return;
+        
+        // Match Max Price
+        if (sub.maxPrice && ad.price > parseInt(sub.maxPrice, 10)) return;
+
+        // Matches! Create notification
+        const newNotif = {
+            id: `notif-${Date.now()}-${Math.random()}`,
+            adId: ad.id,
+            title: `Новое объявление по подписке!`,
+            message: `"${ad.title}" за ${new Intl.NumberFormat('ru-RU').format(ad.price)} KGS в г. ${ad.city}`,
+            image: ad.images[0],
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        notifications.unshift(newNotif);
+        triggered = true;
+    });
+
+    if (triggered) {
+        localStorage.setItem('lalafo_notifications', JSON.stringify(notifications));
+        updateNotificationBadge();
+        renderNotificationsList();
+        
+        // Animate Bell
+        const bellBtn = document.getElementById('notif-bell-btn');
+        if (bellBtn) {
+            bellBtn.style.animation = 'none';
+            setTimeout(() => {
+                bellBtn.style.animation = 'pulseGlow 1.5s 3';
+            }, 10);
+        }
+    }
+}
+
+// Click on Notification item
+function openAdFromNotification(adId, notifId) {
+    // Find ad
+    const ad = ads.find(a => a.id === adId);
+    if (ad) {
+        openAdDetails(ad);
+    }
+    
+    // Remove notification from list on read
+    notifications = notifications.filter(n => n.id !== notifId);
+    localStorage.setItem('lalafo_notifications', JSON.stringify(notifications));
+    updateNotificationBadge();
+    renderNotificationsList();
+
+    // Close Dropdown
+    document.getElementById('notif-dropdown').classList.remove('active');
+}
+
+// Track category viewed for user interests
+function trackUserInterest(category) {
+    if (!category) return;
+    
+    let interests = [];
+    const storedInterests = localStorage.getItem('lalafo_viewed_interests');
+    if (storedInterests) {
+        interests = JSON.parse(storedInterests);
+    }
+
+    // Move category to first index, remove duplication
+    interests = interests.filter(c => c !== category);
+    interests.unshift(category);
+
+    // Keep last 5 interests
+    if (interests.length > 5) {
+        interests = interests.slice(0, 5);
+    }
+
+    localStorage.setItem('lalafo_viewed_interests', JSON.stringify(interests));
+    
+    // Render home recommendations list to reflect the new interest
+    renderHomeRecommendations();
+}
+
+// Render homepage recommendations based on viewed categories
+function renderHomeRecommendations() {
+    const container = document.getElementById('recommendations-container');
+    const carousel = document.getElementById('recommendations-carousel');
+    if (!container || !carousel) return;
+
+    let interests = [];
+    const storedInterests = localStorage.getItem('lalafo_viewed_interests');
+    if (storedInterests) {
+        interests = JSON.parse(storedInterests);
+    }
+
+    if (interests.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    // Filter ads matching user interests (excluding user's own ads if possible)
+    let recommendedAds = ads.filter(ad => interests.includes(ad.category) && ad.seller.name !== "Вы");
+    
+    // If not enough ads, fallback to any ads excluding own
+    if (recommendedAds.length === 0) {
+        recommendedAds = ads.filter(ad => ad.seller.name !== "Вы");
+    }
+
+    // Limit to 8 items
+    recommendedAds = recommendedAds.slice(0, 8);
+
+    if (recommendedAds.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    carousel.innerHTML = "";
+    recommendedAds.forEach(ad => {
+        const card = document.createElement('div');
+        card.className = 'carousel-card';
+        card.onclick = () => openAdDetails(ad);
+
+        card.innerHTML = `
+            <img src="${ad.images[0]}" class="carousel-card-img" onerror="this.src='https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=300'">
+            <div class="carousel-card-info">
+                <div class="carousel-card-title">${ad.title}</div>
+                <div class="carousel-card-price">${new Intl.NumberFormat('ru-RU').format(ad.price)} KGS</div>
+            </div>
+        `;
+        carousel.appendChild(card);
+    });
+
+    container.style.display = 'block';
+}
+
+// Render Similar Ads inside detailed modal
+function renderSimilarAds(activeAd) {
+    const carousel = document.getElementById('similar-ads-carousel');
+    if (!carousel) return;
+
+    // Filter ads matching same category, excluding active ad
+    let similar = ads.filter(ad => ad.category === activeAd.category && ad.id !== activeAd.id);
+
+    if (similar.length === 0) {
+        carousel.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; font-style: italic;">Похожих товаров не найдено.</div>`;
+        return;
+    }
+
+    // Limit to 5 items
+    similar = similar.slice(0, 5);
+
+    carousel.innerHTML = "";
+    similar.forEach(ad => {
+        const card = document.createElement('div');
+        card.className = 'carousel-card';
+        card.onclick = () => {
+            // Close and reopen with the new similar item details!
+            openAdDetails(ad);
+        };
+
+        card.innerHTML = `
+            <img src="${ad.images[0]}" class="carousel-card-img" onerror="this.src='https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=300'">
+            <div class="carousel-card-info">
+                <div class="carousel-card-title">${ad.title}</div>
+                <div class="carousel-card-price">${new Intl.NumberFormat('ru-RU').format(ad.price)} KGS</div>
+            </div>
+        `;
+        carousel.appendChild(card);
+    });
+}
+
+// Send bargain offer in Chat
+function sendBargainOffer(ad, offerAmount) {
+    const adId = ad.id;
+    
+    // Load or Init History
+    if (!chatHistory[adId]) {
+        chatHistory[adId] = [
+            {
+                sender: 'seller',
+                text: `Здравствуйте! Вы интересуетесь объявлением "${ad.title}" за ${new Intl.NumberFormat('ru-RU').format(ad.price)} KGS?`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+        ];
+    }
+
+    // User sends offer message
+    const offerMsg = {
+        sender: 'user',
+        text: `Предложение цены: ${new Intl.NumberFormat('ru-RU').format(offerAmount)} KGS. Согласны?`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isOffer: true,
+        offerAmount: offerAmount
+    };
+
+    chatHistory[adId].push(offerMsg);
+    
+    // Render immediately
+    renderChatMessages(adId);
+
+    // Simulate Seller response
+    setTimeout(() => {
+        // Calculate discount percent
+        let responseText = "";
+        let offerStatus = ""; // 'accepted' or 'rejected'
+        let counterAmount = 0;
+
+        if (offerAmount < ad.price * 0.75) {
+            // Under 75% - outright rejection
+            responseText = `Ой, нет, это слишком дешево! Я не могу отдать за такую сумму. Моя крайняя цена — ${new Intl.NumberFormat('ru-RU').format(Math.round(ad.price * 0.95))} KGS.`;
+            offerStatus = "rejected";
+        } else if (offerAmount >= ad.price * 0.75 && offerAmount < ad.price * 0.90) {
+            // Between 75% and 90% - counter offer
+            counterAmount = Math.round((ad.price + offerAmount) / 2);
+            responseText = `Хм, это маловато. Давайте сойдемся посередине на ${new Intl.NumberFormat('ru-RU').format(counterAmount)} KGS? Если согласны, вы можете оплатить по Безопасной сделке ниже.`;
+            offerStatus = "counter";
+        } else {
+            // Reasonable discount (90% or more) - acceptance!
+            responseText = `Договорились! Я согласен продать за ${new Intl.NumberFormat('ru-RU').format(offerAmount)} KGS. Вы можете оформить покупку ниже.`;
+            offerStatus = "accepted";
+        }
+
+        // Add seller text reply
+        const sellerMsg = {
+            sender: 'seller',
+            text: responseText,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        chatHistory[adId].push(sellerMsg);
+
+        // Append interactive offer response bubble if accepted or countered
+        if (offerStatus === "accepted" || offerStatus === "counter") {
+            const finalPrice = offerStatus === "accepted" ? offerAmount : counterAmount;
+            
+            const interactiveBubble = {
+                sender: 'seller',
+                text: `Согласованная цена: **${new Intl.NumberFormat('ru-RU').format(finalPrice)} KGS**`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isInteractiveBargain: true,
+                finalPrice: finalPrice,
+                statusText: offerStatus === "accepted" ? 'Принято' : 'Встречное предложение'
+            };
+            chatHistory[adId].push(interactiveBubble);
+        }
+
+        renderChatMessages(adId);
+    }, 1500);
+}
+
+function buyDiscountedAd(adId, price) {
+    const ad = ads.find(a => a.id === adId);
+    if (!ad) return;
+    
+    // Create copy with modified price
+    const modifiedAd = { ...ad, price: price };
+    
+    // Close chat
+    chatWidget.classList.remove('active');
+    
+    // Open checkout!
+    openSafeDealCheckout(modifiedAd);
+}
+
 // Global scope bindings for inline HTML clicks (e.g. toggleFavorite)
 window.toggleFavorite = toggleFavorite;
 window.removeUploadedImage = removeUploadedImage;
@@ -2081,6 +2696,9 @@ window.disputeDeal = disputeDeal;
 window.simulateSellerShipment = simulateSellerShipment;
 window.simulateItemDelivery = simulateItemDelivery;
 window.translateMessage = translateMessage;
+window.openAdFromMap = openAdFromMap;
+window.buyDiscountedAd = buyDiscountedAd;
+window.updateMapMarkers = updateMapMarkers;
 
 // Run App on Load
 window.addEventListener('DOMContentLoaded', init);

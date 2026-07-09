@@ -6,6 +6,8 @@
     <title>Lalafo Clone — Доска объявлений в Кыргызстане</title>
     <meta name="description" content="Покупайте и продавайте авто, недвижимость, электронику, одежду и услуги на Lalafo Clone. Тысячи свежих объявлений каждый день!">
     <link rel="stylesheet" href="styles.css">
+    <!-- Leaflet.js Interactive Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
     
@@ -70,6 +72,27 @@
                     </svg>
                     <span>Сделки</span>
                 </button>
+
+                <!-- Notifications Bell -->
+                <div class="nav-notifications-wrapper">
+                    <button class="nav-notifications-btn" id="notif-bell-btn" aria-label="Уведомления">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="notif-badge" id="notif-badge-count" style="display: none;">0</span>
+                    </button>
+                    <!-- Notifications Dropdown -->
+                    <div class="notifications-dropdown" id="notif-dropdown">
+                        <div class="notif-header">
+                            <h4>Уведомления</h4>
+                            <span class="notif-clear-btn" id="notif-clear-all">Очистить</span>
+                        </div>
+                        <div class="notif-list" id="notif-list-container">
+                            <div class="notif-empty">Нет новых уведомлений</div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Theme Toggle Button -->
                 <button class="theme-toggle" id="theme-toggle" aria-label="Сменить тему">
@@ -272,16 +295,46 @@
                 </div>
 
                 <button class="btn-reset-filters" id="reset-filters">Сбросить фильтры</button>
+                <button class="btn-subscribe-search" id="subscribe-search-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span>Подписаться на поиск</span>
+                </button>
             </aside>
 
             <!-- Standard Listings -->
             <section class="listings-container">
+                <!-- Interest Recommendations (Recommended for you) -->
+                <div class="recommendations-section" id="recommendations-container" style="display: none;">
+                    <div class="carousel-header">
+                        <h3 class="carousel-title-sparkle">✨ Рекомендовано вам</h3>
+                    </div>
+                    <div class="recommendations-carousel" id="recommendations-carousel">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
                 <div class="section-header">
                     <div>
                         <h2>Лента объявлений</h2>
                         <span class="section-subtitle">Самые свежие предложения</span>
                     </div>
+                    <!-- View Toggle: Grid / Map -->
+                    <div class="view-toggle-container">
+                        <button type="button" class="btn-view-toggle active" id="toggle-grid-view">
+                            📱 Плиткой
+                        </button>
+                        <button type="button" class="btn-view-toggle" id="toggle-map-view">
+                            🗺️ На карте
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Interactive Map container -->
+                <div id="map-view-container"></div>
+
                 <div class="listings-grid" id="ads-grid">
                     <!-- Standard cards dynamically loaded here -->
                 </div>
@@ -704,6 +757,8 @@
         </div>
     </footer>
 
+    <!-- Leaflet.js Interactive Map Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="app.js"></script>
 </body>
 </html>
