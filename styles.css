@@ -57,6 +57,38 @@
     --glass-border: rgba(255, 255, 255, 0.05);
 }
 
+[data-theme="oled"] {
+    /* OLED Pitch Black Theme */
+    --bg-primary: #000000;
+    --bg-secondary: #000000;
+    --bg-tertiary: #121212;
+    --text-primary: #ffffff;
+    --text-secondary: #e2e8f0;
+    --text-muted: #64748b;
+    --primary: #818cf8;
+    --primary-light: rgba(129, 140, 248, 0.15);
+    --primary-hover: #6366f1;
+    --accent: #34d399;
+    --accent-light: rgba(52, 211, 153, 0.15);
+    --accent-hover: #059669;
+    --danger: #f87171;
+    --danger-light: rgba(248, 113, 113, 0.15);
+    --border-color: #1e293b;
+    --card-shadow: 0 0 0 1px #1e293b;
+    --shadow-hover: 0 0 0 2px var(--primary);
+    --glass-bg: rgba(0, 0, 0, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Global Font Scaler */
+body {
+    font-size: calc(1em * var(--font-scale, 1.0)) !important;
+}
+
+h1, h2, h3, h4, h5, h6, p, span, button, input, select, textarea {
+    font-size: calc(1em * var(--font-scale, 1.0));
+}
+
 /* Reset */
 * {
     margin: 0;

@@ -401,6 +401,25 @@ function init() {
     document.documentElement.setAttribute('data-theme', storedTheme);
     updateThemeIcon(storedTheme);
 
+    // Restore customized settings
+    const storedAccentPrimary = localStorage.getItem('lalafo_accent_primary');
+    const storedAccentColor = localStorage.getItem('lalafo_accent_color');
+    if (storedAccentPrimary && storedAccentColor) {
+        document.documentElement.style.setProperty('--primary', storedAccentPrimary);
+        document.documentElement.style.setProperty('--accent', storedAccentColor);
+    }
+
+    const storedFontSize = localStorage.getItem('lalafo_font_size') || 'medium';
+    const fontScale = storedFontSize === 'small' ? 0.9 : (storedFontSize === 'large' ? 1.15 : 1.0);
+    document.documentElement.style.setProperty('--font-scale', fontScale);
+
+    const storedRadius = localStorage.getItem('lalafo_border_radius') || '16px';
+    const smVal = storedRadius === '0px' ? '0px' : (storedRadius === '28px' ? '16px' : '8px');
+    const lgVal = storedRadius === '0px' ? '0px' : (storedRadius === '28px' ? '40px' : '24px');
+    document.documentElement.style.setProperty('--border-radius-sm', smVal);
+    document.documentElement.style.setProperty('--border-radius-md', storedRadius);
+    document.documentElement.style.setProperty('--border-radius-lg', lgVal);
+
     // Initial Renders
     updateFavoritesBadge();
     updateVerificationHeader();
@@ -435,6 +454,52 @@ function init() {
 function setupEventListeners() {
     // Theme Toggle
     themeToggleBtn.addEventListener('click', toggleTheme);
+
+    // Interface Settings Cog Toggle
+    const settingsBtn = document.getElementById('interface-settings-btn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            const modal = document.getElementById('interface-settings-modal');
+            if (modal) {
+                // Pre-highlight active choices based on storage
+                const activeTheme = localStorage.getItem('lalafo_theme') || 'light';
+                const activeFont = localStorage.getItem('lalafo_font_size') || 'medium';
+                const activeRadius = localStorage.getItem('lalafo_border_radius') || '16px';
+                
+                // Toggle active classes in settings panel
+                document.querySelectorAll('.btn-book').forEach(btn => btn.classList.remove('active'));
+                
+                const themeBtn = document.getElementById(`theme-btn-${activeTheme}`);
+                if (themeBtn) themeBtn.classList.add('active');
+                
+                const fontBtnId = activeFont === 'small' ? 'font-btn-sm' : (activeFont === 'large' ? 'font-btn-lg' : 'font-btn-md');
+                const fontBtn = document.getElementById(fontBtnId);
+                if (fontBtn) fontBtn.classList.add('active');
+
+                const radiusBtnId = activeRadius === '0px' ? 'radius-btn-sharp' : (activeRadius === '28px' ? 'radius-btn-round' : 'radius-btn-standard');
+                const radiusBtn = document.getElementById(radiusBtnId);
+                if (radiusBtn) radiusBtn.classList.add('active');
+
+                modal.classList.add('active');
+            }
+        });
+    }
+
+    const settingsCloseBtn = document.getElementById('settings-modal-close');
+    if (settingsCloseBtn) {
+        settingsCloseBtn.addEventListener('click', () => {
+            const modal = document.getElementById('interface-settings-modal');
+            if (modal) modal.classList.remove('active');
+        });
+    }
+
+    const saveSettingsBtn = document.getElementById('btn-save-settings');
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', () => {
+            const modal = document.getElementById('interface-settings-modal');
+            if (modal) modal.classList.remove('active');
+        });
+    }
 
     // Search and Header Filters
     searchBtn.addEventListener('click', handleHeaderSearch);
@@ -3376,6 +3441,65 @@ function openShareQrModal(ad) {
     modal.classList.add('active');
 }
 
+// Customization Theme changer
+function setCustomTheme(theme) {
+    localStorage.setItem('lalafo_theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    updateThemeIcon(theme);
+    
+    // Toggle active highlights in modal
+    document.querySelectorAll('[id^="theme-btn-"]').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`theme-btn-${theme}`);
+    if (activeBtn) activeBtn.classList.add('active');
+}
+
+// Customization Accent color changer
+function setCustomAccent(primaryColor, accentColor) {
+    localStorage.setItem('lalafo_accent_primary', primaryColor);
+    localStorage.setItem('lalafo_accent_color', accentColor);
+    
+    document.documentElement.style.setProperty('--primary', primaryColor);
+    document.documentElement.style.setProperty('--accent', accentColor);
+    
+    // Toggle active highlights on color circles
+    document.querySelectorAll('.color-dot').forEach(dot => {
+        if (dot.dataset.color === primaryColor) dot.classList.add('active');
+        else dot.classList.remove('active');
+    });
+}
+
+// Customization Font Size scaler
+function setCustomFontSize(size) {
+    localStorage.setItem('lalafo_font_size', size);
+    
+    const fontScale = size === 'small' ? 0.9 : (size === 'large' ? 1.15 : 1.0);
+    document.documentElement.style.setProperty('--font-scale', fontScale);
+    
+    // Toggle active highlights in modal
+    document.querySelectorAll('[id^="font-btn-"]').forEach(btn => btn.classList.remove('active'));
+    const btnId = size === 'small' ? 'font-btn-sm' : (size === 'large' ? 'font-btn-lg' : 'font-btn-md');
+    const activeBtn = document.getElementById(btnId);
+    if (activeBtn) activeBtn.classList.add('active');
+}
+
+// Customization Border Radius changer
+function setCustomRadius(radius) {
+    localStorage.setItem('lalafo_border_radius', radius);
+    
+    const smVal = radius === '0px' ? '0px' : (radius === '28px' ? '16px' : '8px');
+    const lgVal = radius === '0px' ? '0px' : (radius === '28px' ? '40px' : '24px');
+    
+    document.documentElement.style.setProperty('--border-radius-sm', smVal);
+    document.documentElement.style.setProperty('--border-radius-md', radius);
+    document.documentElement.style.setProperty('--border-radius-lg', lgVal);
+
+    // Toggle active highlights in modal
+    document.querySelectorAll('[id^="radius-btn-"]').forEach(btn => btn.classList.remove('active'));
+    const btnId = radius === '0px' ? 'radius-btn-sharp' : (radius === '28px' ? 'radius-btn-round' : 'radius-btn-standard');
+    const activeBtn = document.getElementById(btnId);
+    if (activeBtn) activeBtn.classList.add('active');
+}
+
 // Global scope bindings for inline HTML clicks (e.g. toggleFavorite)
 window.toggleFavorite = toggleFavorite;
 window.removeUploadedImage = removeUploadedImage;
@@ -3400,6 +3524,10 @@ window.openMutualRatingModal = openMutualRatingModal;
 window.updateBuyerRatingUI = updateBuyerRatingUI;
 window.openFraudScanner = openFraudScanner;
 window.openShareQrModal = openShareQrModal;
+window.setCustomTheme = setCustomTheme;
+window.setCustomAccent = setCustomAccent;
+window.setCustomFontSize = setCustomFontSize;
+window.setCustomRadius = setCustomRadius;
 
 // Run App on Load
 window.addEventListener('DOMContentLoaded', init);

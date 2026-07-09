@@ -101,6 +101,14 @@
                     </svg>
                 </button>
 
+                <!-- Interface Settings Button -->
+                <button class="theme-toggle" id="interface-settings-btn" aria-label="Настройки интерфейса" style="margin-left: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+
                 <!-- Favorites Nav Indicator -->
                 <button class="favorites-nav" id="favorites-nav" aria-label="Избранное">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -809,6 +817,67 @@
                     <input type="text" id="share-link-input" readonly style="width: 100%; text-align: center; font-size: 13px; font-weight: 600; background: var(--bg-tertiary); cursor: pointer; border-radius: 8px; border: 1px solid var(--border-color); padding: 10px;" onclick="this.select()">
                     <button type="button" class="btn-buy-safe" id="btn-copy-link" style="width: 100%; padding: 12px; font-weight: 700;">Копировать ссылку</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interface Customization Modal -->
+    <div class="modal-overlay" id="interface-settings-modal">
+        <div class="modal-container" style="max-width: 440px;">
+            <button class="modal-close" id="settings-modal-close">&times;</button>
+            <div class="checkout-header" style="background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 24px; position: relative;">
+                <h2 style="justify-content: center; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px;">🎨 Настройка интерфейса</h2>
+                <p>Персонализируйте внешний вид приложения lalafo clone под свои предпочтения.</p>
+            </div>
+            <div class="checkout-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- 1. Theme selection -->
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Тема оформления</label>
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        <button type="button" class="btn-book" id="theme-btn-light" style="flex: 1; padding: 10px;" onclick="setCustomTheme('light')">☀️ Светлая</button>
+                        <button type="button" class="btn-book" id="theme-btn-dark" style="flex: 1; padding: 10px;" onclick="setCustomTheme('dark')">🌙 Темная</button>
+                        <button type="button" class="btn-book" id="theme-btn-oled" style="flex: 1; padding: 10px;" onclick="setCustomTheme('oled')">🕶️ OLED</button>
+                    </div>
+                </div>
+
+                <!-- 2. Accent Color selection -->
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Акцентный цвет</label>
+                    <div style="display: flex; gap: 12px; margin-top: 8px; justify-content: space-around; background: var(--bg-tertiary); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <!-- Indigo (Default primary) -->
+                        <span class="color-dot" data-color="#4f46e5" style="background: #4f46e5; width: 32px; height: 32px; border-radius: 50%; display: inline-block; cursor: pointer; border: 3px solid white; box-shadow: 0 0 0 1px #ccc;" onclick="setCustomAccent('#4f46e5', '#10b981')"></span>
+                        <!-- Teal -->
+                        <span class="color-dot" data-color="#00a896" style="background: #00a896; width: 32px; height: 32px; border-radius: 50%; display: inline-block; cursor: pointer; border: 3px solid white; box-shadow: 0 0 0 1px #ccc;" onclick="setCustomAccent('#00a896', '#02c39a')"></span>
+                        <!-- Purple -->
+                        <span class="color-dot" data-color="#9c27b0" style="background: #9c27b0; width: 32px; height: 32px; border-radius: 50%; display: inline-block; cursor: pointer; border: 3px solid white; box-shadow: 0 0 0 1px #ccc;" onclick="setCustomAccent('#9c27b0', '#ba68c8')"></span>
+                        <!-- Green -->
+                        <span class="color-dot" data-color="#2e7d32" style="background: #2e7d32; width: 32px; height: 32px; border-radius: 50%; display: inline-block; cursor: pointer; border: 3px solid white; box-shadow: 0 0 0 1px #ccc;" onclick="setCustomAccent('#2e7d32', '#4caf50')"></span>
+                        <!-- Orange -->
+                        <span class="color-dot" data-color="#e65100" style="background: #e65100; width: 32px; height: 32px; border-radius: 50%; display: inline-block; cursor: pointer; border: 3px solid white; box-shadow: 0 0 0 1px #ccc;" onclick="setCustomAccent('#e65100', '#ff9800')"></span>
+                    </div>
+                </div>
+
+                <!-- 3. Font Size selection -->
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Размер текста</label>
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        <button type="button" class="btn-book" id="font-btn-sm" style="flex: 1; padding: 8px;" onclick="setCustomFontSize('small')">А- Мелкий</button>
+                        <button type="button" class="btn-book" id="font-btn-md" style="flex: 1; padding: 8px;" onclick="setCustomFontSize('medium')">А Средний</button>
+                        <button type="button" class="btn-book" id="font-btn-lg" style="flex: 1; padding: 8px;" onclick="setCustomFontSize('large')">А+ Крупный</button>
+                    </div>
+                </div>
+
+                <!-- 4. Element rounding selection -->
+                <div class="form-group">
+                    <label style="font-weight: 700; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Округлость углов (Радиус)</label>
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        <button type="button" class="btn-book" id="radius-btn-sharp" style="flex: 1; padding: 8px;" onclick="setCustomRadius('0px')">Острые</button>
+                        <button type="button" class="btn-book" id="radius-btn-standard" style="flex: 1; padding: 8px;" onclick="setCustomRadius('16px')">Стандарт</button>
+                        <button type="button" class="btn-book" id="radius-btn-round" style="flex: 1; padding: 8px;" onclick="setCustomRadius('28px')">Круглые</button>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-buy-safe" id="btn-save-settings" style="width: 100%; margin-top: 10px; padding: 12px; font-weight: 700;">Применить</button>
             </div>
         </div>
     </div>
