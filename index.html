@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lalafo Clone — Доска объявлений в Кыргызстане</title>
+    <meta name="description" content="Покупайте и продавайте авто, недвижимость, электронику, одежду и услуги на Lalafo Clone. Тысячи свежих объявлений каждый день!">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    
+    <!-- SVG Gradients Definition -->
+    <svg style="display: none;">
+        <defs>
+            <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#4f46e5" />
+                <stop offset="100%" stop-color="#10b981" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo" id="logo-link">
+                <!-- Inline SVG Logo -->
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2L2 22h20L12 2zm0 3.99L18.47 18H5.53L12 5.99z"/>
+                    <circle cx="12" cy="13" r="2"/>
+                </svg>
+                <span class="logo-text">lalafo</span>
+            </a>
+
+            <!-- Header Quick Search & City -->
+            <div class="search-wrapper" style="box-shadow: none; border-radius: 12px; padding: 4px 8px; max-width: 500px; width: 100%; display: none;" id="header-search-bar">
+                <div class="search-input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Я ищу...">
+                </div>
+                <div class="search-select-group">
+                    <select id="city-select">
+                        <option value="">Все города</option>
+                        <option value="Бишкек">Бишкек</option>
+                        <option value="Ош">Ош</option>
+                        <option value="Джалал-Абад">Джалал-Абад</option>
+                        <option value="Каракол">Каракол</option>
+                    </select>
+                </div>
+                <button class="btn-search" id="search-btn">Найти</button>
+            </div>
+
+            <div class="nav-actions">
+                <!-- Theme Toggle Button -->
+                <button class="theme-toggle" id="theme-toggle" aria-label="Сменить тему">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <!-- Favorites Nav Indicator -->
+                <button class="favorites-nav" id="favorites-nav" aria-label="Избранное">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    <span class="fav-badge" id="favorites-badge" style="display: none;">0</span>
+                </button>
+
+                <!-- Post Ad Trigger -->
+                <button class="btn-post-ad" id="post-ad-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Подать объявление
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Search Area -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="container hero-content">
+            <h1>Покупайте и продавайте с умом на <span>lalafo</span></h1>
+            <p>Тысячи частных объявлений о продаже автомобилей, недвижимости, электроники и многого другого.</p>
+            
+            <!-- Beautiful Central Search Bar -->
+            <div class="search-wrapper">
+                <div class="search-input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="hero-search-input" oninput="document.getElementById('search-input').value = this.value; document.getElementById('filter-search').value = this.value; activeFilters.search = this.value;" placeholder="Что вы ищете сегодня? (например, iPhone 15, квартира...)">
+                </div>
+                <button class="btn-search" style="padding: 14px 32px;" onclick="handleHeaderSearch();">Поиск</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Navigation List -->
+    <section class="categories-section">
+        <div class="container">
+            <div class="categories-container" id="categories-container">
+                
+                <!-- Category Pill: Real Estate -->
+                <div class="category-pill" data-category="realestate">
+                    <div class="category-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
+                    <span class="category-name">Недвижимость</span>
+                </div>
+
+                <!-- Category Pill: Cars -->
+                <div class="category-pill" data-category="cars">
+                    <div class="category-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="3" width="22" height="13" rx="2" ry="2"></rect>
+                            <polygon points="16 8 20 8 23 11 23 16 1 16 1 11 4 8 8 8 16 8"></polygon>
+                            <circle cx="6" cy="18" r="3"></circle>
+                            <circle cx="18" cy="18" r="3"></circle>
+                        </svg>
+                    </div>
+                    <span class="category-name">Авто</span>
+                </div>
+
+                <!-- Category Pill: Electronics -->
+                <div class="category-pill" data-category="electronics">
+                    <div class="category-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        </svg>
+                    </div>
+                    <span class="category-name">Электроника</span>
+                </div>
+
+                <!-- Category Pill: Jobs -->
+                <div class="category-pill" data-category="jobs">
+                    <div class="category-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                    </div>
+                    <span class="category-name">Работа</span>
+                </div>
+
+                <!-- Category Pill: Services -->
+                <div class="category-pill" data-category="services">
+                    <div class="category-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                        </svg>
+                    </div>
+                    <span class="category-name">Услуги</span>
+                </div>
+
+                <!-- Category Pill: Fashion -->
+                <div class="category-pill" data-category="fashion">
+                    <div class="category-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l1.5 9a2 2 0 0 0 2 1.67h12.44a2 2 0 0 0 2-1.67l1.5-9a2 2 0 0 0-1.34-2.23z"></path>
+                            <path d="M12 6v14"></path>
+                        </svg>
+                    </div>
+                    <span class="category-name">Одежда</span>
+                </div>
+
+                <!-- Category Pill: Home & Garden -->
+                <div class="category-pill" data-category="homegarden">
+                    <div class="category-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"></path>
+                        </svg>
+                    </div>
+                    <span class="category-name">Дом и Сад</span>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <main class="container">
+        <!-- VIP Ads Premium Grid -->
+        <section style="margin-bottom: 40px;">
+            <div class="section-header">
+                <div>
+                    <h2>VIP Объявления</h2>
+                    <span class="section-subtitle">Рекомендуемые предложения от наших партнеров</span>
+                </div>
+            </div>
+            <div class="vip-carousel" id="vip-carousel">
+                <!-- VIP Cards dynamically loaded here -->
+            </div>
+        </section>
+
+        <!-- Main Filter & Listings Grid Layout -->
+        <div class="main-layout">
+            
+            <!-- Filters Sidebar -->
+            <aside class="filters-sidebar">
+                <div class="filter-group">
+                    <label for="filter-search">Поиск</label>
+                    <input type="text" id="filter-search" placeholder="Поиск по названию...">
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-category">Категория</label>
+                    <select id="filter-category">
+                        <option value="">Все категории</option>
+                        <option value="realestate">Недвижимость</option>
+                        <option value="cars">Авто</option>
+                        <option value="electronics">Электроника</option>
+                        <option value="jobs">Работа</option>
+                        <option value="services">Услуги</option>
+                        <option value="fashion">Одежда</option>
+                        <option value="homegarden">Дом и Сад</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-city">Город</label>
+                    <select id="filter-city">
+                        <option value="">Все города</option>
+                        <option value="Бишкек">Бишкек</option>
+                        <option value="Ош">Ош</option>
+                        <option value="Джалал-Абад">Джалал-Абад</option>
+                        <option value="Каракол">Каракол</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Цена, KGS</label>
+                    <div class="price-range">
+                        <input type="number" id="filter-min-price" placeholder="от" min="0">
+                        <input type="number" id="filter-max-price" placeholder="до" min="0">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-sort-by">Сортировка</label>
+                    <select id="filter-sort-by">
+                        <option value="newest">Сначала новые</option>
+                        <option value="cheapest">Сначала дешевые</option>
+                        <option value="expensive">Сначала дорогие</option>
+                    </select>
+                </div>
+
+                <button class="btn-reset-filters" id="reset-filters">Сбросить фильтры</button>
+            </aside>
+
+            <!-- Standard Listings -->
+            <section class="listings-container">
+                <div class="section-header">
+                    <div>
+                        <h2>Лента объявлений</h2>
+                        <span class="section-subtitle">Самые свежие предложения</span>
+                    </div>
+                </div>
+                <div class="listings-grid" id="ads-grid">
+                    <!-- Standard cards dynamically loaded here -->
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Post Ad Form Modal -->
+    <div class="modal-overlay" id="post-ad-modal">
+        <div class="modal-container">
+            <button class="modal-close">&times;</button>
+            <div class="post-form-header">
+                <h2>Подать объявление</h2>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">Заполните форму ниже, чтобы опубликовать ваше предложение.</p>
+            </div>
+            <form class="post-form-body" id="post-ad-form">
+                
+                <div class="form-group">
+                    <label for="ad-title">Название объявления *</label>
+                    <input type="text" id="ad-title" placeholder="Например: Продаю iPhone 13 Pro Max" required>
+                </div>
+
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label for="ad-category">Категория *</label>
+                        <select id="ad-category" required>
+                            <option value="" disabled selected>Выберите...</option>
+                            <option value="realestate">Недвижимость</option>
+                            <option value="cars">Авто</option>
+                            <option value="electronics">Электроника</option>
+                            <option value="jobs">Работа</option>
+                            <option value="services">Услуги</option>
+                            <option value="fashion">Одежда</option>
+                            <option value="homegarden">Дом и Сад</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="ad-price">Цена (KGS) *</label>
+                        <input type="number" id="ad-price" placeholder="Сумма" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label for="ad-city">Город *</label>
+                        <select id="ad-city" required>
+                            <option value="" disabled selected>Выберите...</option>
+                            <option value="Бишкек">Бишкек</option>
+                            <option value="Ош">Ош</option>
+                            <option value="Джалал-Абад">Джалал-Абад</option>
+                            <option value="Каракол">Каракол</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="ad-phone">Телефон *</label>
+                        <input type="text" id="ad-phone" placeholder="+996 (___) ___-___" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ad-desc">Описание *</label>
+                    <textarea id="ad-desc" rows="4" placeholder="Подробно опишите состояние товара, характеристики, условия сделки..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Фотографии</label>
+                    <div class="image-upload-area">
+                        <div class="upload-icon">&#128247;</div>
+                        <p style="font-size: 14px; font-weight: 500; margin-bottom: 4px;">Выберите файлы или перетащите их сюда</p>
+                        <p style="font-size: 11px; color: var(--text-muted);">Поддерживаются PNG, JPG до 5 МБ</p>
+                        <input type="file" id="image-upload" multiple accept="image/*">
+                    </div>
+                    <div class="image-previews" id="image-previews">
+                        <!-- Image previews will render here dynamically -->
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit-ad">Опубликовать</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ad Detailed View Modal -->
+    <div class="modal-overlay" id="ad-detail-modal">
+        <!-- Will be loaded dynamically in app.js -->
+    </div>
+
+    <!-- Interactive Simulated Seller Chat -->
+    <div class="chat-widget" id="chat-widget">
+        <div class="chat-header">
+            <div class="chat-seller-info">
+                <div class="chat-seller-avatar" id="chat-seller-avatar">С</div>
+                <div style="font-weight: 600; font-size: 15px;" id="chat-seller-name">Продавец</div>
+            </div>
+            <button class="chat-close" id="chat-close" style="color: white; font-size: 24px;">&times;</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Simulated messages will load here -->
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Напишите сообщение...">
+            <button class="btn-send-msg" id="btn-send-msg" aria-label="Отправить">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                    <path d="M12 2L2 22h20L12 2zm0 3.99L18.47 18H5.53L12 5.99z"/>
+                </svg>
+                <span>lalafo</span>
+            </div>
+            <p>&copy; 2026 Lalafo Clone. Параллельный проект для демонстрации современных UI/UX технологий.</p>
+            <div class="footer-links">
+                <a href="#">Правила</a>
+                <a href="#">Помощь</a>
+                <a href="#">Реклама</a>
+                <a href="#">Контакты</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

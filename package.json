@@ -1,0 +1,13 @@
+{
+  "name": "lalafo-clone",
+  "version": "1.0.0",
+  "description": "Lalafo Clone Classified Ads Web Application",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}
