@@ -1958,3 +1958,454 @@ footer {
 }
 
 /* End of AI Assistant & Verification System Styles */
+
+/* --- Escrow Safe Deals & Advanced Chat Upgrades Styles --- */
+
+/* Safe Deal Header Indicator */
+.nav-deals-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: var(--transition-smooth);
+}
+
+.nav-deals-btn:hover {
+    color: #0284c7;
+    background: var(--bg-secondary);
+    border-color: #0284c7;
+    transform: translateY(-2px);
+}
+
+/* Card Payment Styling */
+.checkout-modal-container {
+    width: 100%;
+    max-width: 500px;
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+}
+
+.checkout-header {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    padding: 24px;
+    position: relative;
+}
+
+.checkout-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkout-header p {
+    font-size: 13px;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+.checkout-body {
+    padding: 24px;
+}
+
+.card-input-wrapper {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.card-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.card-input-row:last-child {
+    margin-bottom: 0;
+}
+
+.card-number-group {
+    flex: 1;
+}
+
+.card-brand-icon {
+    font-size: 24px;
+    color: var(--text-secondary);
+}
+
+.card-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.escrow-alert {
+    background: rgba(2, 132, 199, 0.08);
+    border: 1px solid rgba(2, 132, 199, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 12px;
+    color: #0369a1;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+[data-theme="dark"] .escrow-alert {
+    background: rgba(2, 132, 199, 0.15);
+    color: #38bdf8;
+    border-color: rgba(2, 132, 199, 0.3);
+}
+
+/* Stepper Stepper styling */
+.stepper-container {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin: 24px 0 32px;
+}
+
+.stepper-progress-line {
+    position: absolute;
+    top: 15px;
+    left: 24px;
+    right: 24px;
+    height: 3px;
+    background: var(--border-color);
+    z-index: 1;
+}
+
+.stepper-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.4s ease;
+}
+
+.stepper-node {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 80px;
+}
+
+.stepper-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    transition: var(--transition-smooth);
+}
+
+.stepper-node.active .stepper-circle {
+    border-color: #0284c7;
+    background: #e0f2fe;
+    color: #0369a1;
+    box-shadow: 0 0 10px rgba(2, 132, 199, 0.2);
+}
+
+[data-theme="dark"] .stepper-node.active .stepper-circle {
+    background: #0c4a6e;
+    color: #38bdf8;
+}
+
+.stepper-node.completed .stepper-circle {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+.stepper-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.stepper-node.active .stepper-label {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+/* My Deals Layout */
+.deal-item-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--card-shadow);
+}
+
+.deal-item-card:last-child {
+    margin-bottom: 0;
+}
+
+.deal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.deal-id-tag {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.deal-status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.deal-status-badge.reserved {
+    background: rgba(2, 132, 199, 0.1);
+    color: #0284c7;
+}
+
+.deal-status-badge.shipped {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.deal-status-badge.delivered {
+    background: rgba(139, 92, 246, 0.1);
+    color: #7c3aed;
+}
+
+.deal-status-badge.completed {
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+.deal-status-badge.disputed {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+.deal-card-body {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.deal-prod-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+}
+
+.deal-prod-details h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.deal-prod-details p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.deal-card-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.deal-card-actions button {
+    flex: 1;
+}
+
+/* Simulation panel for easy testing */
+.simulation-panel {
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px dashed rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 16px;
+    font-size: 12px;
+}
+
+.simulation-panel h5 {
+    color: #d97706;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.simulation-panel-btns {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-simulate-step {
+    background: #d97706;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.btn-simulate-step:hover {
+    background: #b45309;
+}
+
+/* Button variants for escrow */
+.btn-buy-safe {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.btn-buy-safe:hover {
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6);
+    transform: translateY(-2px);
+    background: #0369a1;
+}
+
+/* Chat Quick Replies */
+.chat-quick-replies {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border-color);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.chat-quick-replies::-webkit-scrollbar {
+    display: none;
+}
+
+.quick-reply-pill {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: var(--transition-smooth);
+}
+
+.quick-reply-pill:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+    transform: translateY(-1px);
+}
+
+/* Chat Message Translation Styles */
+.msg-actions-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+    gap: 8px;
+}
+
+.btn-msg-translate {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    transition: var(--transition-smooth);
+}
+
+.btn-msg-translate:hover {
+    color: var(--primary);
+}
+
+.translation-block {
+    margin-top: 6px;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 6px;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: fadeIn 0.3s ease;
+}
+
+.translation-block::before {
+    content: "🌐 Перевод:";
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-style: normal;
+}
+
+/* Inline Loading Dots for Translation */
+.translating-glow {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.translating-glow span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    animation: bounceDelay 1.4s infinite ease-in-out both;
+}
+
+.translating-glow span:nth-child(1) { animation-delay: -0.32s; }
+.translating-glow span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounceDelay {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1.0); }
+}
+
+/* End of Escrow Safe Deals & Advanced Chat Upgrades Styles */

@@ -217,6 +217,7 @@ function init() {
     updateVerificationHeader();
     renderVIPAds();
     renderAds();
+    setupEscrowAndChatUpgrades();
 
     // Event Listeners
     setupEventListeners();
@@ -808,14 +809,24 @@ function openAdDetails(ad) {
                             </div>
                         </div>
 
-                        <div class="detail-action-buttons">
+                        <div class="detail-action-buttons" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                             <button class="btn-show-contact" id="btn-show-contact" data-phone="${ad.seller.phone}">Показать номер телефона</button>
-                            <button class="btn-chat-seller" id="btn-chat-seller">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                                Написать продавцу
-                            </button>
+                            <div style="display: flex; gap: 12px; width: 100%;">
+                                <button class="btn-chat-seller" id="btn-chat-seller" style="flex: 1;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                    Написать продавцу
+                                </button>
+                                ${ad.seller.name !== "Вы" ? `
+                                <button class="btn-buy-safe" id="btn-buy-safe-deal" style="flex: 1.2;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                                    </svg>
+                                    Купить через Безопасную сделку
+                                </button>` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -861,6 +872,15 @@ function openAdDetails(ad) {
         closeActiveModals();
         openChatWithSeller(ad);
     });
+
+    // Buy Safe Action
+    const buySafeBtn = adDetailModal.querySelector('#btn-buy-safe-deal');
+    if (buySafeBtn) {
+        buySafeBtn.addEventListener('click', () => {
+            closeActiveModals();
+            openSafeDealCheckout(ad);
+        });
+    }
 }
 
 function getCategoryNameRu(cat) {
@@ -917,11 +937,20 @@ function renderChatMessages(adId) {
     chatMessages.innerHTML = '';
     const messages = chatHistory[adId] || [];
 
-    messages.forEach(msg => {
+    messages.forEach((msg, idx) => {
         const div = document.createElement('div');
         div.className = `msg ${msg.sender === 'seller' ? 'received' : 'sent'}`;
+        
+        const isReceived = msg.sender === 'seller';
+
         div.innerHTML = `
             <div class="msg-text">${msg.text}</div>
+            ${isReceived ? `
+            <div class="msg-actions-toolbar">
+                <button type="button" class="btn-msg-translate" onclick="translateMessage(this, ${idx}, '${adId}')">
+                    🌐 Перевести
+                </button>
+            </div>` : ''}
             <div style="font-size: 9px; opacity: 0.6; text-align: right; margin-top: 4px;">${msg.time}</div>
         `;
         chatMessages.appendChild(div);
@@ -949,6 +978,8 @@ function sendChatMessage() {
     // Simulate Seller typing response
     setTimeout(() => {
         const responses = [
+            "Ооба, баары жайында. Качан келип көрөсүз?",
+            "Саламатсызбы! Баасы акыркы, түшпөйм.",
             "Да, всё в силе. Когда вам удобно посмотреть?",
             "Товар еще продается. Торг уместен в разумных пределах.",
             "Здравствуйте! Могу скинуть дополнительные фото в WhatsApp.",
@@ -1628,6 +1659,411 @@ function applyAIGeneratedData() {
     alert("Данные объявления успешно заполнены искусственным интеллектом!");
 }
 
+/* --- Escrow Safe Deals & Advanced Chat Upgrades Logic --- */
+
+// State variables
+let safeDeals = [];
+
+// Translation Dictionary for simulated neural translator
+const TRANSLATION_DICTIONS = {
+    "Ооба, баары жайында. Качан келип көрөсүз?": "Да, все в порядке. Когда приедете посмотреть?",
+    "Саламатсызбы! Баасы акыркы, түшпөйм.": "Здравствуйте! Цена окончательная, не снижу.",
+    "Да, всё в силе. Когда вам удобно посмотреть?": "Ооба, баары күчүндө. Качан көрүүгө ыңгайлуу болот?",
+    "Товар еще продается. Торг уместен в разумных пределах.": "Буюм дагы эле сатылууда. Соодалашуу акылга сыярлык чектен ишке ашат.",
+    "Здравствуйте! Могу скинуть дополнительные фото в WhatsApp.": "Саламатсызбы! Мен WhatsApp аркылуу кошумча сүрөттөрдү жөнөтө алам.",
+    "Да, могу отправить курьером или встретиться лично.": "Ооба, мен курьер менен жөнөтө алам же жеке жолугуша алам.",
+    "Цена окончательная, уступать больше не буду.": "Баасы акыркы, мындан ары түшпөйм."
+};
+
+function setupEscrowAndChatUpgrades() {
+    // Load Safe Deals
+    const storedDeals = localStorage.getItem('lalafo_safe_deals');
+    if (storedDeals) {
+        safeDeals = JSON.parse(storedDeals);
+    } else {
+        safeDeals = [];
+        localStorage.setItem('lalafo_safe_deals', JSON.stringify(safeDeals));
+    }
+
+    // Checkout modal event listeners
+    const checkoutClose = document.getElementById('checkout-modal-close');
+    if (checkoutClose) {
+        checkoutClose.addEventListener('click', () => {
+            document.getElementById('safe-deal-checkout-modal').classList.remove('active');
+        });
+    }
+
+    const checkoutForm = document.getElementById('checkout-form');
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', handleCheckoutSubmit);
+    }
+
+    // Auto format credit card number
+    const cardNumInput = document.getElementById('card-number');
+    if (cardNumInput) {
+        cardNumInput.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let matches = v.match(/\d{4,16}/g);
+            let match = matches && matches[0] || '';
+            let parts = [];
+
+            for (let i=0, len=match.length; i<len; i+=4) {
+                parts.push(match.substring(i, i+4));
+            }
+
+            if (parts.length > 0) {
+                e.target.value = parts.join(' ');
+            } else {
+                e.target.value = v;
+            }
+        });
+    }
+
+    // Auto format card expiry date
+    const cardExpiryInput = document.getElementById('card-expiry');
+    if (cardExpiryInput) {
+        cardExpiryInput.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            if (v.length >= 2) {
+                e.target.value = v.substring(0, 2) + '/' + v.substring(2, 4);
+            } else {
+                e.target.value = v;
+            }
+        });
+    }
+
+    // Deals tracker trigger
+    const dealsBtn = document.getElementById('deals-tracker-btn');
+    if (dealsBtn) {
+        dealsBtn.addEventListener('click', openMyDeals);
+    }
+
+    const dealsClose = document.getElementById('my-deals-modal-close');
+    if (dealsClose) {
+        dealsClose.addEventListener('click', () => {
+            document.getElementById('my-deals-modal').classList.remove('active');
+        });
+    }
+
+    // Chat Quick Replies click handler
+    const quickRepliesContainer = document.getElementById('chat-quick-replies');
+    if (quickRepliesContainer) {
+        quickRepliesContainer.addEventListener('click', (e) => {
+            const pill = e.target.closest('.quick-reply-pill');
+            if (!pill) return;
+            
+            const text = pill.textContent.trim();
+            const adId = chatWidget.dataset.adId;
+            if (!text || !adId) return;
+
+            // Send quick message
+            chatInput.value = text;
+            sendChatMessage();
+        });
+    }
+}
+
+// Open checkout panel
+function openSafeDealCheckout(ad) {
+    document.getElementById('checkout-product-title').textContent = ad.title;
+    document.getElementById('checkout-product-price').textContent = `${new Intl.NumberFormat('ru-RU').format(ad.price)} KGS`;
+    
+    // Clear inputs
+    document.getElementById('card-number').value = "";
+    document.getElementById('card-expiry').value = "";
+    document.getElementById('card-cvv').value = "";
+    document.getElementById('checkout-address').value = "";
+
+    // Save ad context globally to use on form submit
+    document.getElementById('checkout-form').dataset.adId = ad.id;
+
+    openModal(document.getElementById('safe-deal-checkout-modal'));
+}
+
+// Handle payment form submit
+function handleCheckoutSubmit(e) {
+    e.preventDefault();
+    
+    const adId = e.target.dataset.adId;
+    const ad = ads.find(a => a.id === adId);
+    if (!ad) return;
+
+    const address = document.getElementById('checkout-address').value.trim();
+
+    // Create safe deal record
+    const newDeal = {
+        id: `deal-${Date.now()}`,
+        adId: ad.id,
+        title: ad.title,
+        price: ad.price,
+        image: ad.images[0],
+        sellerName: ad.seller.name,
+        address: address,
+        status: 'reserved', // 'reserved' | 'shipped' | 'delivered' | 'completed' | 'disputed'
+        date: new Date().toLocaleDateString('ru-RU')
+    };
+
+    safeDeals.unshift(newDeal);
+    localStorage.setItem('lalafo_safe_deals', JSON.stringify(safeDeals));
+
+    // Close checkout modal
+    document.getElementById('safe-deal-checkout-modal').classList.remove('active');
+
+    // Notify user
+    alert("Оплата прошла успешно! Деньги зарезервированы на безопасном счете эскроу. Продавец уведомлен о необходимости отправить товар.");
+
+    // Open active deals view
+    openMyDeals();
+}
+
+// Open active deals list modal
+function openMyDeals() {
+    renderDealsList();
+    openModal(document.getElementById('my-deals-modal'));
+}
+
+// Render active safe deals list
+function renderDealsList() {
+    const container = document.getElementById('deals-list-container');
+    container.innerHTML = "";
+
+    if (safeDeals.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding: 40px 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 12px;">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                </svg>
+                <h3>У вас пока нет покупок</h3>
+                <p>Покупайте товары со знаком «Безопасная сделка» для защиты ваших денег.</p>
+            </div>
+        `;
+        return;
+    }
+
+    safeDeals.forEach(deal => {
+        const card = document.createElement('div');
+        card.className = 'deal-item-card';
+
+        let statusText = "Зарезервировано";
+        let badgeClass = "reserved";
+        let progressFillWidth = "0%";
+        let step1Class = "completed";
+        let step2Class = "";
+        let step3Class = "";
+        let step4Class = "";
+        let step4Label = "Завершено";
+
+        if (deal.status === 'reserved') {
+            statusText = "Оплачено (резерв)";
+            badgeClass = "reserved";
+            progressFillWidth = "0%";
+            step2Class = "active";
+        } else if (deal.status === 'shipped') {
+            statusText = "В пути (отправлено)";
+            badgeClass = "shipped";
+            progressFillWidth = "50%";
+            step2Class = "completed";
+            step3Class = "active";
+        } else if (deal.status === 'delivered') {
+            statusText = "Доставлено";
+            badgeClass = "delivered";
+            progressFillWidth = "100%";
+            step2Class = "completed";
+            step3Class = "completed";
+            step4Class = "active";
+        } else if (deal.status === 'completed') {
+            statusText = "Выплачено продавцу";
+            badgeClass = "completed";
+            progressFillWidth = "100%";
+            step2Class = "completed";
+            step3Class = "completed";
+            step4Class = "completed";
+        } else if (deal.status === 'disputed') {
+            statusText = "Спор открыт";
+            badgeClass = "disputed";
+            progressFillWidth = "100%";
+            step2Class = "completed";
+            step3Class = "completed";
+            step4Class = "disputed";
+            step4Label = "Спор";
+        }
+
+        const priceFormatted = new Intl.NumberFormat('ru-RU').format(deal.price);
+
+        card.innerHTML = `
+            <div class="deal-card-header">
+                <span class="deal-id-tag">ID: ${deal.id}</span>
+                <span class="deal-status-badge ${badgeClass}">${statusText}</span>
+            </div>
+            
+            <div class="deal-card-body">
+                <img src="${deal.image}" class="deal-prod-img" onerror="this.src='https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=300'">
+                <div class="deal-prod-details">
+                    <h4>${deal.title}</h4>
+                    <p style="font-weight: 700; color: var(--accent); font-size: 14px; margin-top: 4px;">${priceFormatted} KGS</p>
+                    <p>Продавец: <strong>${deal.sellerName}</strong></p>
+                    <p>Адрес доставки: ${deal.address}</p>
+                    <p>Дата заказа: ${deal.date}</p>
+                </div>
+            </div>
+
+            <!-- Stepper Stepper Tracker -->
+            <div class="stepper-container">
+                <div class="stepper-progress-line">
+                    <div class="stepper-progress-fill" style="width: ${progressFillWidth};"></div>
+                </div>
+                <div class="stepper-node ${step1Class}">
+                    <div class="stepper-circle">1</div>
+                    <div class="stepper-label">Оплачено</div>
+                </div>
+                <div class="stepper-node ${step2Class}">
+                    <div class="stepper-circle">2</div>
+                    <div class="stepper-label">В пути</div>
+                </div>
+                <div class="stepper-node ${step3Class}">
+                    <div class="stepper-circle">3</div>
+                    <div class="stepper-label">Доставлено</div>
+                </div>
+                <div class="stepper-node ${step4Class}">
+                    <div class="stepper-circle">4</div>
+                    <div class="stepper-label">${step4Label}</div>
+                </div>
+            </div>
+
+            <!-- Contextual action buttons -->
+            <div class="deal-card-actions-wrapper">
+                ${deal.status === 'delivered' ? `
+                <div class="deal-card-actions">
+                    <button class="btn-post-ad" style="background: var(--accent); box-shadow: none;" onclick="confirmItemReceipt('${deal.id}')">Подтвердить получение</button>
+                    <button class="btn-reset-filters" style="margin-top: 0;" onclick="disputeDeal('${deal.id}')">Открыть спор</button>
+                </div>
+                ` : ''}
+                
+                ${deal.status === 'completed' ? `
+                <p style="color: var(--accent); font-size: 13px; font-weight: 500; text-align: center; background: var(--accent-light); padding: 8px; border-radius: 8px;">
+                    🤝 Сделка закрыта. Деньги отправлены на карту продавца.
+                </p>
+                ` : ''}
+                
+                ${deal.status === 'disputed' ? `
+                <p style="color: var(--danger); font-size: 13px; font-weight: 500; text-align: center; background: var(--danger-light); padding: 8px; border-radius: 8px;">
+                    ⚠️ Спор на рассмотрении арбитража. Выплата заблокирована.
+                </p>
+                ` : ''}
+            </div>
+
+            <!-- Simulation Controls (for demo purposes) -->
+            ${(deal.status === 'reserved' || deal.status === 'shipped') ? `
+            <div class="simulation-panel">
+                <h5>Панель симуляции (для тестирования)</h5>
+                <p>Поскольку это оффлайн-макет, вы можете переключать шаги доставки самостоятельно:</p>
+                <div class="simulation-panel-btns">
+                    ${deal.status === 'reserved' ? `
+                    <button class="btn-simulate-step" onclick="simulateSellerShipment('${deal.id}')">Симулировать отправку продавцом</button>
+                    ` : ''}
+                    ${deal.status === 'shipped' ? `
+                    <button class="btn-simulate-step" onclick="simulateItemDelivery('${deal.id}')">Симулировать доставку курьером</button>
+                    ` : ''}
+                </div>
+            </div>
+            ` : ''}
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+function simulateSellerShipment(dealId) {
+    const deal = safeDeals.find(d => d.id === dealId);
+    if (!deal) return;
+
+    deal.status = 'shipped';
+    localStorage.setItem('lalafo_safe_deals', JSON.stringify(safeDeals));
+    renderDealsList();
+    alert("Товар передан в курьерскую службу. Статус сделки изменен на «В пути»!");
+}
+
+function simulateItemDelivery(dealId) {
+    const deal = safeDeals.find(d => d.id === dealId);
+    if (!deal) return;
+
+    deal.status = 'delivered';
+    localStorage.setItem('lalafo_safe_deals', JSON.stringify(safeDeals));
+    renderDealsList();
+    alert("Товар успешно доставлен покупателю! Подтвердите получение или откройте спор в случае проблем.");
+}
+
+function confirmItemReceipt(dealId) {
+    const deal = safeDeals.find(d => d.id === dealId);
+    if (!deal) return;
+
+    deal.status = 'completed';
+    localStorage.setItem('lalafo_safe_deals', JSON.stringify(safeDeals));
+    renderDealsList();
+    alert("Сделка подтверждена! Зарезервированная сумма выплачена продавцу. Спасибо за покупку!");
+}
+
+function disputeDeal(dealId) {
+    const deal = safeDeals.find(d => d.id === dealId);
+    if (!deal) return;
+
+    deal.status = 'disputed';
+    localStorage.setItem('lalafo_safe_deals', JSON.stringify(safeDeals));
+    renderDealsList();
+    
+    // Auto-create chat window with dispute message
+    alert("Спор успешно открыт. Средства заморожены. Служба арбитража lalafo подключена к чату сделки.");
+}
+
+// --- Chat Translation System logic ---
+
+function translateMessage(btnEl, msgIdx, adId) {
+    const chatContainer = chatHistory[adId];
+    if (!chatContainer || !chatContainer[msgIdx]) return;
+    
+    const message = chatContainer[msgIdx];
+    const text = message.text;
+    
+    // Show AI loading dots
+    const actionsToolbar = btnEl.parentElement;
+    actionsToolbar.innerHTML = `
+        <span class="translating-glow">
+            Перевод ИИ <span>.</span><span>.</span><span>.</span>
+        </span>
+    `;
+    
+    setTimeout(() => {
+        // Resolve translation
+        let translatedText = "";
+        if (TRANSLATION_DICTIONS[text]) {
+            translatedText = TRANSLATION_DICTIONS[text];
+        } else {
+            // General translation fallback: RU -> EN, otherwise mock generic EN text
+            const hasCyrillic = /[а-яё]/i.test(text);
+            if (hasCyrillic) {
+                translatedText = "[English translation]: Hello, yes, this item is available for viewing at your convenience.";
+            } else {
+                translatedText = "[Перевод на русский]: Привет! Да, товар доступен, вы можете посмотреть его в любое время.";
+            }
+        }
+        
+        // Append translation block
+        const msgDiv = actionsToolbar.closest('.msg');
+        const textBlock = msgDiv.querySelector('.msg-text');
+        
+        const transBlock = document.createElement('div');
+        transBlock.className = 'translation-block';
+        transBlock.textContent = translatedText;
+        
+        // Insert after message text
+        textBlock.appendChild(transBlock);
+        
+        // Remove translating glow
+        actionsToolbar.remove();
+    }, 800);
+}
+
 // Global scope bindings for inline HTML clicks (e.g. toggleFavorite)
 window.toggleFavorite = toggleFavorite;
 window.removeUploadedImage = removeUploadedImage;
@@ -1638,6 +2074,13 @@ window.handleVerifyDocUpload = handleVerifyDocUpload;
 window.removeVerifyDoc = removeVerifyDoc;
 window.startBiometricScan = startBiometricScan;
 window.updateVerificationHeader = updateVerificationHeader;
+window.setupEscrowAndChatUpgrades = setupEscrowAndChatUpgrades;
+window.openSafeDealCheckout = openSafeDealCheckout;
+window.confirmItemReceipt = confirmItemReceipt;
+window.disputeDeal = disputeDeal;
+window.simulateSellerShipment = simulateSellerShipment;
+window.simulateItemDelivery = simulateItemDelivery;
+window.translateMessage = translateMessage;
 
 // Run App on Load
 window.addEventListener('DOMContentLoaded', init);

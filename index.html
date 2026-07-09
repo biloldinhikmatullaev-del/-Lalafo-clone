@@ -62,6 +62,15 @@
                     <span id="verify-btn-text">Верификация</span>
                 </button>
 
+                <!-- Safe Deals Tracker Trigger -->
+                <button class="nav-deals-btn" id="deals-tracker-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #0284c7;">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                    </svg>
+                    <span>Сделки</span>
+                </button>
+
                 <!-- Theme Toggle Button -->
                 <button class="theme-toggle" id="theme-toggle" aria-label="Сменить тему">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -570,6 +579,82 @@
         </div>
     </div>
 
+    <!-- Safe Deal Checkout Modal -->
+    <div class="modal-overlay" id="safe-deal-checkout-modal">
+        <div class="modal-container checkout-modal-container">
+            <button class="modal-close" id="checkout-modal-close">&times;</button>
+            <div class="checkout-header">
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                    Безопасная сделка
+                </h2>
+                <p>Деньги будут удержаны на гарантийном счете lalafo до подтверждения получения вами товара.</p>
+            </div>
+            <form class="checkout-body" id="checkout-form">
+                <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Товар</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                        <span id="checkout-product-title" style="font-weight: 600; font-size: 14px; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 250px;">Название товара</span>
+                        <span id="checkout-product-price" style="font-weight: 700; font-size: 16px; color: var(--accent); white-space: nowrap;">0 KGS</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Номер карты *</label>
+                    <div class="card-input-wrapper">
+                        <div class="card-input-row">
+                            <span class="card-brand-icon">💳</span>
+                            <div class="card-number-group">
+                                <input type="text" id="card-number" placeholder="4000 1234 5678 9010" maxlength="19" required style="background: none; border: none; font-size: 16px; width: 100%; padding: 0;">
+                            </div>
+                        </div>
+                        <div class="card-details-grid">
+                            <div>
+                                <label style="font-size: 11px; margin-bottom: 4px;">Срок действия *</label>
+                                <input type="text" id="card-expiry" placeholder="ММ/ГГ" maxlength="5" required style="background: none; border: none; font-size: 14px; width: 100%; padding: 0;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; margin-bottom: 4px;">CVC/CVV *</label>
+                                <input type="password" id="card-cvv" placeholder="***" maxlength="3" required style="background: none; border: none; font-size: 14px; width: 100%; padding: 0;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="checkout-address">Адрес доставки в Бишкеке *</label>
+                    <input type="text" id="checkout-address" placeholder="Например: ул. Токтогула 125, кв. 4" required>
+                </div>
+
+                <div class="escrow-alert">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0; margin-top: 2px;">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span><strong>Гарантия безопасности:</strong> Продавец не получит деньги, пока вы не подтвердите успешное получение и осмотр товара. Вы можете вернуть товар в любой момент.</span>
+                </div>
+
+                <button type="submit" class="btn-buy-safe" style="width: 100%;">Зарезервировать деньги</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Active Deals / Purchased Transactions Modal -->
+    <div class="modal-overlay" id="my-deals-modal">
+        <div class="modal-container" style="max-width: 580px;">
+            <button class="modal-close" id="my-deals-modal-close">&times;</button>
+            <div class="post-form-header" style="background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary)); border-bottom: 1px solid var(--border-color);">
+                <h2>Мои покупки (Безопасная сделка)</h2>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">Здесь вы можете отслеживать статус ваших заказов и подтверждать выплаты продавцам.</p>
+            </div>
+            <div class="post-form-body" id="deals-list-container" style="max-height: 480px; overflow-y: auto; padding: 20px;">
+                <!-- Loaded dynamically in app.js -->
+            </div>
+        </div>
+    </div>
+
     <!-- Interactive Simulated Seller Chat -->
     <div class="chat-widget" id="chat-widget">
         <div class="chat-header">
@@ -581,6 +666,13 @@
         </div>
         <div class="chat-messages" id="chat-messages">
             <!-- Simulated messages will load here -->
+        </div>
+        <!-- Quick replies horizontal container -->
+        <div class="chat-quick-replies" id="chat-quick-replies">
+            <button type="button" class="quick-reply-pill">Еще продается?</button>
+            <button type="button" class="quick-reply-pill">Какое состояние?</button>
+            <button type="button" class="quick-reply-pill">Уступите в цене?</button>
+            <button type="button" class="quick-reply-pill">Где можно посмотреть?</button>
         </div>
         <div class="chat-input-area">
             <input type="text" id="chat-input" placeholder="Напишите сообщение...">
