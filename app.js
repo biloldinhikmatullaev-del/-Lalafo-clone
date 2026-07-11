@@ -383,6 +383,16 @@ function init() {
                 { name: "Самат", amount: ad.price - 22000 }
             ];
         }
+
+        // Ensure price history exists
+        if (!ad.priceHistory || ad.priceHistory.length === 0) {
+            const price = ad.price;
+            ad.priceHistory = [
+                { date: "02 Июл", price: Math.round(price * 1.08) },
+                { date: "05 Июл", price: Math.round(price * 1.04) },
+                { date: "08 Июл", price: price }
+            ];
+        }
     });
 
     localStorage.setItem('lalafo_ads', JSON.stringify(ads));
@@ -1146,6 +1156,20 @@ function openAdDetails(ad) {
                         <p class="detail-desc">${ad.description}</p>
                     </div>
 
+                    <!-- Price History Tracker -->
+                    <div class="price-history-section">
+                        <div class="price-history-header">
+                            <span class="price-history-title">📉 Динамика цены</span>
+                            <span class="price-history-title" style="color: var(--accent); font-size: 11px;">Гарантия лучшей цены</span>
+                        </div>
+                        <div class="price-history-chart-wrapper" id="price-history-chart-container">
+                            <!-- SVG Chart will be injected here -->
+                        </div>
+                        <div class="price-history-list" id="price-history-list-items">
+                            <!-- History items will be injected here -->
+                        </div>
+                    </div>
+
                     <div class="detail-section">
                         <div class="detail-section-title">Продавец</div>
                         <div class="seller-card">
@@ -1183,9 +1207,16 @@ function openAdDetails(ad) {
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                     </svg>
-                                    Написать продавцу
+                                    Написать
                                 </button>
-                                ${ad.seller.name !== "Вы" && !ad.auction ? `
+                                ${ad.seller.name !== "Вы" ? `
+                                <button class="btn-show-contact" id="btn-video-call-show" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; border: none;" ${bookedByOther ? 'disabled style="opacity: 0.5;"' : ''}>
+                                    🎥 Видеопоказ
+                                </button>
+                                ` : ''}
+                            </div>
+                            ${ad.seller.name !== "Вы" && !ad.auction ? `
+                            <div style="display: flex; gap: 12px; width: 100%;">
                                 <button class="btn-msg-offer" id="btn-offer-price" style="flex: 0.8; height: 42px; border-radius: 6px; padding: 0 12px; justify-content: center; font-size: 12px;" ${isBooked ? 'disabled style="opacity: 0.5;"' : ''}>
                                     🤝 Торговаться
                                 </button>
@@ -1195,8 +1226,8 @@ function openAdDetails(ad) {
                                         <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
                                     </svg>
                                     Купить по Безопасной сделке
-                                </button>` : ''}
-                            </div>
+                                </button>
+                            </div>` : ''}
                         </div>
                     </div>
                 </div>
@@ -1213,6 +1244,10 @@ function openAdDetails(ad) {
     `;
 
     openModal(adDetailModal);
+    
+    if (typeof renderPriceHistoryUI === 'function') {
+        renderPriceHistoryUI(ad);
+    }
 
     // Track category viewed for user interest mapping
     trackUserInterest(ad.category);
@@ -1330,6 +1365,17 @@ function openAdDetails(ad) {
         closeActiveModals();
         openFraudScanner(ad, reasonText);
     });
+
+    // Video Call Action
+    const videoCallBtn = adDetailModal.querySelector('#btn-video-call-show');
+    if (videoCallBtn) {
+        videoCallBtn.addEventListener('click', () => {
+            closeActiveModals();
+            if (typeof openVideoCall === 'function') {
+                openVideoCall(ad);
+            }
+        });
+    }
 
     // Chat Action
     const chatSellerBtn = adDetailModal.querySelector('#btn-chat-seller');
@@ -3089,6 +3135,18 @@ function buyDiscountedAd(adId, price) {
     const ad = ads.find(a => a.id === adId);
     if (!ad) return;
     
+    // Add to price history
+    if (!ad.priceHistory) ad.priceHistory = [];
+    const months = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+    const now = new Date();
+    const dateStr = `${String(now.getDate()).padStart(2, '0')} ${months[now.getMonth()]}`;
+    
+    const lastHistory = ad.priceHistory[ad.priceHistory.length - 1];
+    if (!lastHistory || lastHistory.price !== price) {
+        ad.priceHistory.push({ date: dateStr, price: price });
+        localStorage.setItem('lalafo_ads', JSON.stringify(ads));
+    }
+    
     // Create copy with modified price
     const modifiedAd = { ...ad, price: price };
     
@@ -3500,6 +3558,266 @@ function setCustomRadius(radius) {
     if (activeBtn) activeBtn.classList.add('active');
 }
 
+// Customization Border Radius changer
+function setCustomRadius(radius) {
+    localStorage.setItem('lalafo_border_radius', radius);
+    
+    const smVal = radius === '0px' ? '0px' : (radius === '28px' ? '16px' : '8px');
+    const lgVal = radius === '0px' ? '0px' : (radius === '28px' ? '40px' : '24px');
+    
+    document.documentElement.style.setProperty('--border-radius-sm', smVal);
+    document.documentElement.style.setProperty('--border-radius-md', radius);
+    document.documentElement.style.setProperty('--border-radius-lg', lgVal);
+
+    // Toggle active highlights in modal
+    document.querySelectorAll('[id^="radius-btn-"]').forEach(btn => btn.classList.remove('active'));
+    const btnId = radius === '0px' ? 'radius-btn-sharp' : (radius === '28px' ? 'radius-btn-round' : 'radius-btn-standard');
+    const activeBtn = document.getElementById(btnId);
+    if (activeBtn) activeBtn.classList.add('active');
+}
+
+// Render dynamic SVG price sparkline chart
+function renderPriceHistoryUI(ad) {
+    const chartContainer = document.getElementById('price-history-chart-container');
+    const listContainer = document.getElementById('price-history-list-items');
+    if (!chartContainer || !listContainer) return;
+
+    const history = ad.priceHistory || [];
+    if (history.length === 0) {
+        chartContainer.innerHTML = `<span style="font-size: 12px; color: var(--text-muted);">История цен пуста</span>`;
+        listContainer.innerHTML = '';
+        return;
+    }
+
+    // Draw SVG Sparkline
+    const prices = history.map(h => h.price);
+    const minP = Math.min(...prices);
+    const maxP = Math.max(...prices);
+    const deltaP = maxP - minP || 1;
+
+    const paddingX = 40;
+    const paddingY = 15;
+    const width = 360;
+    const height = 80;
+    const stepX = (width - paddingX * 2) / (history.length - 1 || 1);
+
+    const points = history.map((item, index) => {
+        const x = paddingX + index * stepX;
+        const y = height - paddingY - ((item.price - minP) / deltaP) * (height - paddingY * 2);
+        return { x, y, price: item.price, date: item.date };
+    });
+
+    let svgHtml = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" style="overflow: visible;">`;
+    // Horizontal grid dashed lines
+    svgHtml += `<line x1="${paddingX}" y1="${paddingY}" x2="${width - paddingX}" y2="${paddingY}" stroke="var(--border-color)" stroke-dasharray="3,3" />`;
+    svgHtml += `<line x1="${paddingX}" y1="${height - paddingY}" x2="${width - paddingX}" y2="${height - paddingY}" stroke="var(--border-color)" stroke-dasharray="3,3" />`;
+
+    // Path Line
+    const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    svgHtml += `<path d="${pathD}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
+
+    // Dots and text
+    points.forEach((p) => {
+        svgHtml += `
+            <circle cx="${p.x}" cy="${p.y}" r="5" fill="var(--bg-secondary)" stroke="var(--primary)" stroke-width="3" />
+            <text x="${p.x}" y="${p.y - 10}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--text-primary)">${p.price.toLocaleString()} KGS</text>
+            <text x="${p.x}" y="${height - 2}" text-anchor="middle" font-size="8" fill="var(--text-muted)">${p.date}</text>
+        `;
+    });
+    svgHtml += `</svg>`;
+    chartContainer.innerHTML = svgHtml;
+
+    // Populate List
+    let listHtml = '';
+    for (let i = history.length - 1; i >= 0; i--) {
+        const item = history[i];
+        let diffHtml = '';
+        if (i > 0) {
+            const prevPrice = history[i - 1].price;
+            const drop = prevPrice - item.price;
+            if (drop > 0) {
+                const percent = Math.round((drop / prevPrice) * 100);
+                diffHtml = `<span class="price-drop-badge">-${percent}% (Снижено)</span>`;
+            } else if (drop < 0) {
+                const percent = Math.round((Math.abs(drop) / prevPrice) * 100);
+                diffHtml = `<span class="price-drop-badge" style="background: var(--primary-light); color: var(--primary);">+${percent}% (Повышено)</span>`;
+            }
+        } else {
+            diffHtml = `<span class="price-drop-badge" style="background: var(--bg-tertiary); color: var(--text-secondary);">Первоначальная цена</span>`;
+        }
+
+        listHtml += `
+            <div class="price-history-item">
+                <span class="price-history-date">${item.date}</span>
+                <span class="price-history-change-desc">${diffHtml}</span>
+                <span class="price-history-value">${item.price.toLocaleString()} KGS</span>
+            </div>
+        `;
+    }
+    listContainer.innerHTML = listHtml;
+}
+
+let videoCallTimer = null;
+let callDurationInterval = null;
+let ringerInterval = null;
+let audioCtx = null;
+
+// Ring beep generator using Web Audio
+function playRingerBeep() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(425, audioCtx.currentTime);
+        
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.05);
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime + 1.0);
+        gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.1);
+        
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 1.2);
+    } catch(e) {
+        console.log("Audio ringer blocked:", e);
+    }
+}
+
+// Trigger simulated product video call
+function openVideoCall(ad) {
+    const modal = document.getElementById('video-call-modal');
+    const ringingScreen = document.getElementById('video-call-ringing');
+    const streamScreen = document.getElementById('video-call-stream');
+    const avatarIcon = document.getElementById('video-call-avatar-icon');
+    const callerName = document.getElementById('video-call-caller-name');
+    const statusLabel = document.getElementById('video-call-status-label');
+    const durationLabel = document.getElementById('video-call-duration');
+    const feedImg = document.getElementById('video-feed-img');
+    const sellerNameTag = document.getElementById('video-call-seller-name-tag');
+    
+    if (!modal || !ringingScreen || !streamScreen) return;
+
+    // Reset views
+    ringingScreen.style.display = 'flex';
+    streamScreen.style.display = 'none';
+    statusLabel.textContent = "Исходящий видеозвонок...";
+    durationLabel.textContent = "00:00";
+    
+    // Set caller details
+    callerName.textContent = ad.seller.name;
+    avatarIcon.textContent = ad.seller.name.charAt(0).toUpperCase();
+    sellerNameTag.innerHTML = `${ad.seller.name} <span class="video-call-badge-live">LIVE</span>`;
+    
+    // Open modal
+    modal.classList.add('active');
+
+    // Start audio ringing tones
+    playRingerBeep();
+    if (ringerInterval) clearInterval(ringerInterval);
+    ringerInterval = setInterval(playRingerBeep, 2500);
+
+    // Call duration timer variables
+    let callDurationSeconds = 0;
+
+    // Simulate answer after 2.5 seconds
+    if (videoCallTimer) clearTimeout(videoCallTimer);
+    videoCallTimer = setTimeout(() => {
+        clearInterval(ringerInterval);
+        
+        // Play connection tone
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.15);
+        } catch(e){}
+
+        // Toggle screens
+        ringingScreen.style.display = 'none';
+        streamScreen.style.display = 'block';
+
+        // Select live feed representation depending on item
+        let feedUrl = 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500'; // Generic camera show
+        if (ad.id === 'ad-1') {
+            feedUrl = 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=500'; // iPhone live view
+        } else if (ad.id === 'ad-2') {
+            feedUrl = 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=500'; // BMW Interior live view
+        } else if (ad.id === 'ad-5') {
+            feedUrl = 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500'; // PS5 console show
+        } else if (ad.category === 'fashion') {
+            feedUrl = 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500'; // Clothes racks
+        } else if (ad.category === 'homegarden') {
+            feedUrl = 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500'; // Garden tools inspection
+        } else if (ad.category === 'realestate') {
+            feedUrl = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500'; // Room panning view
+        }
+        feedImg.src = feedUrl;
+
+        // Run timer ticks
+        if (callDurationInterval) clearInterval(callDurationInterval);
+        callDurationInterval = setInterval(() => {
+            callDurationSeconds++;
+            const mm = String(Math.floor(callDurationSeconds / 60)).padStart(2, '0');
+            const ss = String(callDurationSeconds % 60).padStart(2, '0');
+            durationLabel.textContent = `${mm}:${ss}`;
+        }, 1000);
+    }, 2800);
+
+    // End call handler helper
+    const endCall = () => {
+        clearTimeout(videoCallTimer);
+        clearInterval(ringerInterval);
+        clearInterval(callDurationInterval);
+        modal.classList.remove('active');
+        
+        // Play hangup tone
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.2);
+        } catch(e){}
+    };
+
+    // Bind decline button and hangup buttons
+    document.getElementById('btn-ringing-decline').onclick = endCall;
+    document.getElementById('btn-call-hangup').onclick = endCall;
+
+    // Mic and Camera mock toggles
+    const muteBtn = document.getElementById('btn-call-mute');
+    muteBtn.onclick = () => {
+        muteBtn.classList.toggle('active-off');
+        muteBtn.title = muteBtn.classList.contains('active-off') ? "Включить микрофон" : "Выключить микрофон";
+        muteBtn.textContent = muteBtn.classList.contains('active-off') ? "🔇" : "🎙️";
+    };
+
+    const camBtn = document.getElementById('btn-call-camera');
+    camBtn.onclick = () => {
+        camBtn.classList.toggle('active-off');
+        camBtn.title = camBtn.classList.contains('active-off') ? "Включить ..." : "Выключить ...";
+        camBtn.textContent = camBtn.classList.contains('active-off') ? "❌📷" : "📷";
+        
+        // Renders dummy dark preview if camera is off
+        const preview = document.querySelector('.user-video-preview img');
+        if (preview) {
+            preview.style.filter = camBtn.classList.contains('active-off') ? "brightness(0)" : "none";
+        }
+    };
+}
+
 // Global scope bindings for inline HTML clicks (e.g. toggleFavorite)
 window.toggleFavorite = toggleFavorite;
 window.removeUploadedImage = removeUploadedImage;
@@ -3528,6 +3846,8 @@ window.setCustomTheme = setCustomTheme;
 window.setCustomAccent = setCustomAccent;
 window.setCustomFontSize = setCustomFontSize;
 window.setCustomRadius = setCustomRadius;
+window.openVideoCall = openVideoCall;
+window.renderPriceHistoryUI = renderPriceHistoryUI;
 
 // Run App on Load
 window.addEventListener('DOMContentLoaded', init);

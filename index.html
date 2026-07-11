@@ -882,6 +882,51 @@
         </div>
     </div>
 
+    <!-- Video Call Modal -->
+    <div class="modal-overlay" id="video-call-modal" style="background: rgba(0,0,0,0.85); z-index: 9999;">
+        <div class="modal-container video-call-modal-container">
+            <!-- 1. Ringing Screen -->
+            <div class="video-call-ringing-screen" id="video-call-ringing">
+                <div class="video-call-avatar" id="video-call-avatar-icon">С</div>
+                <h2 style="color: white; font-size: 22px; font-weight: 700; margin: 0;" id="video-call-caller-name">Алексей</h2>
+                <div class="video-call-status" id="video-call-status-label">Исходящий видеозвонок...</div>
+                
+                <!-- Call control bar ringing -->
+                <div class="video-call-controls-bar" style="position: static; margin-top: 80px;">
+                    <button type="button" class="btn-call-control decline" id="btn-ringing-decline" title="Сбросить" style="width: 60px; height: 60px; font-size: 24px;">
+                        📞
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Live Stream Screen (initially hidden) -->
+            <div class="video-call-stream-screen" id="video-call-stream" style="display: none;">
+                <!-- Seller Main Stream -->
+                <img src="" class="video-stream-feed" id="video-feed-img" alt="Product Live Feed" onerror="this.src='https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=500'">
+                
+                <!-- Floating Local User Camera Preview -->
+                <div class="user-video-preview">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Local Camera Preview">
+                </div>
+
+                <!-- Info Overlays -->
+                <div class="video-call-overlay-info">
+                    <div class="video-call-overlay-name" id="video-call-seller-name-tag">
+                        Алексей <span class="video-call-badge-live">LIVE</span>
+                    </div>
+                    <div style="font-size: 11px; opacity: 0.8; margin-top: 4px;" id="video-call-duration">00:00</div>
+                </div>
+
+                <!-- Live Stream Controls -->
+                <div class="video-call-controls-bar">
+                    <button type="button" class="btn-call-control" id="btn-call-mute" title="Выключить микрофон">🎙️</button>
+                    <button type="button" class="btn-call-control decline" id="btn-call-hangup" title="Завершить вызов" style="transform: rotate(135deg); font-size: 24px;">📞</button>
+                    <button type="button" class="btn-call-control" id="btn-call-camera" title="Выключить камеру">📷</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Interactive Simulated Seller Chat -->
     <div class="chat-widget" id="chat-widget">
         <div class="chat-header">

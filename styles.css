@@ -3242,3 +3242,261 @@ footer {
 }
 
 /* End of Auctions, Bookings, Ratings & Fraud System Styles */
+
+/* --- Video Calls & Price History System Styles --- */
+
+/* Video Call Styles */
+.video-call-modal-container {
+    max-width: 420px;
+    height: 600px;
+    background: #000000;
+    color: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.video-call-ringing-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: radial-gradient(circle, #1a1a2e 0%, #0c0c14 100%);
+    text-align: center;
+}
+
+.video-call-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-size: 40px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5);
+    animation: callPulse 1.8s infinite;
+    margin-bottom: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes callPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 25px rgba(99, 102, 241, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+    }
+}
+
+.video-call-status {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 8px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.video-call-stream-screen {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.video-stream-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #111;
+}
+
+.user-video-preview {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 95px;
+    height: 140px;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    background: #222;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    z-index: 15;
+}
+
+.user-video-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-call-overlay-info {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    z-index: 10;
+}
+
+.video-call-overlay-name {
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.video-call-badge-live {
+    background: #ef4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    animation: blinkBadge 1.2s infinite;
+}
+
+@keyframes blinkBadge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.video-call-controls-bar {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    z-index: 20;
+    padding: 0 20px;
+}
+
+.btn-call-control {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    color: white;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.btn-call-control:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.btn-call-control.decline {
+    background: #ef4444;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+}
+
+.btn-call-control.decline:hover {
+    background: #dc2626;
+}
+
+.btn-call-control.active-off {
+    background: #ef4444;
+}
+
+/* Price History Sparkline Styles */
+.price-history-section {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 20px;
+}
+
+.price-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.price-history-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.price-history-chart-wrapper {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    height: 100px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.price-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 10px;
+}
+
+.price-history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.price-history-date {
+    color: var(--text-muted);
+}
+
+.price-history-change-desc {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.price-history-value {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.price-drop-badge {
+    background: var(--danger-light);
+    color: var(--danger);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+
+/* End of Video Calls & Price History System Styles */
