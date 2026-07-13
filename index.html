@@ -882,6 +882,80 @@
         </div>
     </div>
 
+    <!-- Seller Profile & Reviews / Complaints Modal -->
+    <div class="modal-overlay" id="seller-details-modal" style="z-index: 9999;">
+        <div class="modal-container" style="max-width: 500px;">
+            <button class="modal-close" id="seller-details-close">&times;</button>
+            <div class="checkout-header" style="background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 24px; position: relative;">
+                <h2 style="justify-content: center; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px;" id="seller-modal-name">Профиль продавца</h2>
+                <p>Рейтинг надёжности и история модерации пользователя на lalafo.</p>
+            </div>
+            <div class="checkout-body" style="padding: 24px; display: flex; flex-direction: column;">
+                
+                <!-- Trust Score Box -->
+                <div class="seller-trust-box">
+                    <div class="trust-gauge-circle" id="seller-trust-gauge" style="--trust-deg: 320deg;">95%</div>
+                    <div class="trust-info-meta">
+                        <span class="trust-score-title">Индекс надежности</span>
+                        <div class="trust-score-verdict" id="seller-trust-verdict" style="color: var(--accent);">Отличный продавец ✓</div>
+                        <p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;" id="seller-trust-description">Покупатели подтверждают честность сделок.</p>
+                    </div>
+                </div>
+
+                <!-- Tabs header -->
+                <div class="seller-tabs-container">
+                    <button class="seller-tab-btn active" id="tab-btn-reviews" onclick="switchSellerTab('reviews')">⭐ Отзывы</button>
+                    <button class="seller-tab-btn" id="tab-btn-complaints" onclick="switchSellerTab('complaints')">⚠️ История жалоб (<span id="seller-complaints-count">0</span>)</button>
+                </div>
+
+                <!-- Content Area: 1. Reviews and Rating Breakdown -->
+                <div id="seller-content-reviews">
+                    <!-- Histogram -->
+                    <div class="rating-histogram">
+                        <div class="rating-bar-row">
+                            <span class="rating-star-count">5 ★</span>
+                            <div class="rating-bar-bg"><div class="rating-bar-fill" id="hist-bar-5" style="width: 85%;"></div></div>
+                            <span class="rating-bar-percent" id="hist-5">85%</span>
+                        </div>
+                        <div class="rating-bar-row">
+                            <span class="rating-star-count">4 ★</span>
+                            <div class="rating-bar-bg"><div class="rating-bar-fill" id="hist-bar-4" style="width: 10%;"></div></div>
+                            <span class="rating-bar-percent" id="hist-4">10%</span>
+                        </div>
+                        <div class="rating-bar-row">
+                            <span class="rating-star-count">3 ★</span>
+                            <div class="rating-bar-bg"><div class="rating-bar-fill" id="hist-bar-3" style="width: 5%;"></div></div>
+                            <span class="rating-bar-percent" id="hist-3">5%</span>
+                        </div>
+                        <div class="rating-bar-row">
+                            <span class="rating-star-count">2 ★</span>
+                            <div class="rating-bar-bg"><div class="rating-bar-fill" id="hist-bar-2" style="width: 0%;"></div></div>
+                            <span class="rating-bar-percent" id="hist-2">0%</span>
+                        </div>
+                        <div class="rating-bar-row">
+                            <span class="rating-star-count">1 ★</span>
+                            <div class="rating-bar-bg"><div class="rating-bar-fill" id="hist-bar-1" style="width: 0%;"></div></div>
+                            <span class="rating-bar-percent" id="hist-1">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Reviews List -->
+                    <div class="seller-reviews-list" id="seller-reviews-list-container">
+                        <!-- Filled in JS -->
+                    </div>
+                </div>
+
+                <!-- Content Area: 2. Complaints History -->
+                <div id="seller-content-complaints" style="display: none;">
+                    <div class="seller-complaints-list" id="seller-complaints-list-container">
+                        <!-- Filled in JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- Video Call Modal -->
     <div class="modal-overlay" id="video-call-modal" style="background: rgba(0,0,0,0.85); z-index: 9999;">
         <div class="modal-container video-call-modal-container">

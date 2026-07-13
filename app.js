@@ -397,6 +397,11 @@ function init() {
 
     localStorage.setItem('lalafo_ads', JSON.stringify(ads));
 
+    // Load and seed sellers moderation database
+    if (typeof initSellersData === 'function') {
+        initSellersData();
+    }
+
     // Load Favorites
     const storedFavorites = localStorage.getItem('lalafo_favorites');
     if (storedFavorites) {
@@ -1184,11 +1189,12 @@ function openAdDetails(ad) {
                                         </svg>
                                     </span>` : ''}
                                 </h4>
-                                <div class="seller-rating">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <div class="seller-rating" id="btn-seller-rating-details" style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border-color); margin-top: 4px;" title="Показать отзывы и историю жалоб продавца">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color: #f59e0b;">
                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                     </svg>
-                                    <span>${ad.seller.rating}</span>
+                                    <span style="font-weight: 700; font-size: 12px; color: var(--text-primary);">${ad.seller.rating}</span>
+                                    <span style="font-size: 11px; color: var(--text-muted); margin-left: 2px;">• Подробнее</span>
                                 </div>
                             </div>
                         </div>
@@ -1348,6 +1354,16 @@ function openAdDetails(ad) {
         shareQrBtn.addEventListener('click', () => {
             if (typeof openShareQrModal === 'function') {
                 openShareQrModal(ad);
+            }
+        });
+    }
+
+    // Seller Detailed Rating details action
+    const sellerRatingDetailsBtn = adDetailModal.querySelector('#btn-seller-rating-details');
+    if (sellerRatingDetailsBtn) {
+        sellerRatingDetailsBtn.addEventListener('click', () => {
+            if (typeof openSellerDetailsModal === 'function') {
+                openSellerDetailsModal(ad.seller.name);
             }
         });
     }
@@ -3416,6 +3432,9 @@ function openFraudScanner(ad, reasonText) {
                     const riskBar = document.getElementById('fraud-risk-bar');
                     riskBar.style.width = `${totalRisk}%`;
                     
+                    let statusType = 'rejected';
+                    let verdictText = "Жалоба отклонена (Риск минимальный)";
+
                     if (totalRisk > 60) {
                         riskBar.style.background = '#ef4444'; // Red danger
                         document.getElementById('fraud-verdict-desc').innerHTML = `
@@ -3427,18 +3446,29 @@ function openFraudScanner(ad, reasonText) {
                         ad.blocked = true;
                         localStorage.setItem('lalafo_ads', JSON.stringify(ads));
                         renderAds();
+
+                        statusType = 'blocked';
+                        verdictText = "Объявление заблокировано модератором за риск мошенничества";
                     } else if (totalRisk >= 30) {
                         riskBar.style.background = '#f59e0b'; // Amber warning
                         document.getElementById('fraud-verdict-desc').innerHTML = `
                             <strong>Вердикт ИИ:</strong> Риск средний (${totalRisk}%). Жалоба направлена живым модераторам для ручной сверки. 
                             Объявление пока остается в поиске.
                         `;
+
+                        statusType = 'resolved';
+                        verdictText = "Жалоба направлена на ручную модерацию";
                     } else {
                         riskBar.style.background = '#10b981'; // Green OK
                         document.getElementById('fraud-verdict-desc').innerHTML = `
                             <strong>Вердикт ИИ:</strong> Риск минимальный (${totalRisk}%). Подозрительной активности не обнаружено. 
                             Жалоба отклонена.
                         `;
+                    }
+
+                    // Append complaint to seller's log
+                    if (typeof appendSellerComplaint === 'function') {
+                        appendSellerComplaint(ad.seller.name, reasonText, verdictText, statusType);
                     }
 
                     // Render checkpoints
@@ -3818,6 +3848,211 @@ function openVideoCall(ad) {
     };
 }
 
+// Initialize or seed sellers statistics database
+function initSellersData() {
+    const stored = localStorage.getItem('lalafo_sellers_data');
+    if (stored) {
+        sellersData = JSON.parse(stored);
+    } else {
+        sellersData = {
+            "Алексей": {
+                trustScore: 98,
+                reviews: [
+                    { reviewer: "Максим", rating: 5, comment: "Купил iPhone, всё в идеале. Продавец пунктуальный.", date: "05 Июл" },
+                    { reviewer: "Белек", rating: 5, comment: "Честный человек, товар соответствует описанию.", date: "30 Июн" }
+                ],
+                complaints: [
+                    { date: "08 Июл", reason: "Заниженная цена", verdict: "Отклонено (Проверено ИИ-модератором: цена соответствует средней по рынку)", status: "rejected" }
+                ]
+            },
+            "Мирлан": {
+                trustScore: 100,
+                reviews: [
+                    { reviewer: "Эмиль", rating: 5, comment: "Отличный автомобиль, состояние превосходное.", date: "02 Июл" }
+                ],
+                complaints: []
+            },
+            "Аскар": {
+                trustScore: 78,
+                reviews: [
+                    { reviewer: "Карина", rating: 4, comment: "Машина хорошая, но были скрытые мелочи.", date: "06 Июл" },
+                    { reviewer: "Азиз", rating: 3, comment: "Долго отвечал на сообщения.", date: "03 Июл" }
+                ],
+                complaints: [
+                    { date: "09 Июл", reason: "Подозрение на мошенничество", verdict: "Решено (Вынесено предупреждение продавцу ИИ-модератором)", status: "resolved" }
+                ]
+            },
+            "Каныкей": {
+                trustScore: 95,
+                reviews: [
+                    { reviewer: "Эрлан", rating: 5, comment: "Чистая и уютная квартира, рекомендую!", date: "08 Июл" }
+                ],
+                complaints: []
+            }
+        };
+        localStorage.setItem('lalafo_sellers_data', JSON.stringify(sellersData));
+    }
+}
+
+// Appends a new complaint to a seller dynamically
+function appendSellerComplaint(sellerName, reason, verdict, statusType) {
+    if (!sellersData[sellerName]) {
+        sellersData[sellerName] = { trustScore: 95, reviews: [], complaints: [] };
+    }
+    
+    const months = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+    const now = new Date();
+    const dateStr = `${String(now.getDate()).padStart(2, '0')} ${months[now.getMonth()]}`;
+
+    sellersData[sellerName].complaints.unshift({
+        date: dateStr,
+        reason: reason,
+        verdict: verdict,
+        status: statusType
+    });
+
+    // Recalculate trust score based on complaints
+    // -20 trust score for blocked items, -10 for warnings
+    let penalty = 0;
+    sellersData[sellerName].complaints.forEach(c => {
+        if (c.status === 'blocked') penalty += 20;
+        else if (c.status === 'resolved') penalty += 10;
+        else penalty += 2;
+    });
+    sellersData[sellerName].trustScore = Math.max(30, 100 - penalty);
+
+    localStorage.setItem('lalafo_sellers_data', JSON.stringify(sellersData));
+}
+
+// Open seller details reviews and moderation complaints modal
+function openSellerDetailsModal(sellerName) {
+    const modal = document.getElementById('seller-details-modal');
+    if (!modal) return;
+
+    if (!sellersData[sellerName]) {
+        sellersData[sellerName] = {
+            trustScore: 95,
+            reviews: [
+                { reviewer: "Покупатель", rating: 5, comment: "Сделка прошла успешно.", date: "10 Июл" }
+            ],
+            complaints: []
+        };
+    }
+
+    const seller = sellersData[sellerName];
+    document.getElementById('seller-modal-name').textContent = `Профиль: ${sellerName}`;
+    
+    // Set Trust score and gauge conic gradient angle
+    const trustGauge = document.getElementById('seller-trust-gauge');
+    trustGauge.textContent = `${seller.trustScore}%`;
+    const degVal = Math.round((seller.trustScore / 100) * 360);
+    trustGauge.style.setProperty('--trust-deg', `${degVal}deg`);
+
+    const verdictLabel = document.getElementById('seller-trust-verdict');
+    const descriptionLabel = document.getElementById('seller-trust-description');
+
+    if (seller.trustScore >= 90) {
+        verdictLabel.textContent = "Отличный продавец ✓";
+        verdictLabel.style.color = "var(--accent)";
+        descriptionLabel.textContent = "Покупатели полностью подтверждают надежность и безопасность.";
+    } else if (seller.trustScore >= 70) {
+        verdictLabel.textContent = "Надёжность средняя ⚠";
+        verdictLabel.style.color = "#f59e0b";
+        descriptionLabel.textContent = "Имеются подтвержденные жалобы от пользователей.";
+    } else {
+        verdictLabel.textContent = "Низкая надёжность ⛔";
+        verdictLabel.style.color = "var(--danger)";
+        descriptionLabel.textContent = "Будьте осторожны. Многократные нарушения правил модерации.";
+    }
+
+    // Set Tab count
+    document.getElementById('seller-complaints-count').textContent = seller.complaints.length;
+
+    // Reset switch tabs view to Reviews
+    switchSellerTab('reviews');
+
+    // Build Reviews list and histograms
+    const reviewsList = document.getElementById('seller-reviews-list-container');
+    if (seller.reviews.length === 0) {
+        reviewsList.innerHTML = `<p style="font-size:12px; color:var(--text-muted); text-align:center; padding: 20px 0;">Отзывов пока нет</p>`;
+    } else {
+        reviewsList.innerHTML = seller.reviews.map(r => `
+            <div class="seller-review-card">
+                <div class="review-card-header">
+                    <span style="font-weight:700;">${r.reviewer}</span>
+                    <span style="color:var(--text-muted); font-size:11px;">${r.date}</span>
+                </div>
+                <div style="color:#f59e0b; margin-bottom: 4px;">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+                <p style="color:var(--text-secondary); line-height: 1.3;">${r.comment}</p>
+            </div>
+        `).join('');
+    }
+
+    // Star distribution calculation
+    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    seller.reviews.forEach(r => {
+        if (counts[r.rating] !== undefined) counts[r.rating]++;
+    });
+    const totalReviews = seller.reviews.length || 1;
+    [5, 4, 3, 2, 1].forEach(star => {
+        const pct = Math.round((counts[star] / totalReviews) * 100);
+        const percentLabel = document.getElementById(`hist-${star}`);
+        const barFill = document.getElementById(`hist-bar-${star}`);
+        if (percentLabel) percentLabel.textContent = `${pct}%`;
+        if (barFill) barFill.style.width = `${pct}%`;
+    });
+
+    // Build Complaints list
+    const complaintsList = document.getElementById('seller-complaints-list-container');
+    if (seller.complaints.length === 0) {
+        complaintsList.innerHTML = `<p style="font-size:12px; color:var(--text-muted); text-align:center; padding: 20px 0;">Жалоб на данного продавца не поступало</p>`;
+    } else {
+        complaintsList.innerHTML = seller.complaints.map(c => {
+            let statusBadge = '';
+            if (c.status === 'blocked') statusBadge = `<span class="complaint-status-badge status-blocked">Заблокировано ИИ</span>`;
+            else if (c.status === 'resolved') statusBadge = `<span class="complaint-status-badge status-resolved">Предупреждение</span>`;
+            else statusBadge = `<span class="complaint-status-badge status-rejected">Отклонено</span>`;
+
+            return `
+                <div class="seller-complaint-card">
+                    <div class="complaint-card-header">
+                        <span style="font-weight:700; color:var(--text-primary);">Тип: ${c.reason}</span>
+                        <span style="color:var(--text-muted); font-size:11px;">${c.date}</span>
+                    </div>
+                    <p style="color:var(--text-secondary); margin: 2px 0;"><strong>Статус:</strong> ${statusBadge}</p>
+                    <p style="color:var(--text-muted); line-height: 1.3; font-style: italic;">Решение: ${c.verdict}</p>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Close binding
+    const closeBtn = document.getElementById('seller-details-close');
+    closeBtn.onclick = () => modal.classList.remove('active');
+
+    modal.classList.add('active');
+}
+
+// Switch between Reviews and Complaints tabs
+function switchSellerTab(tab) {
+    const tabReviews = document.getElementById('tab-btn-reviews');
+    const tabComplaints = document.getElementById('tab-btn-complaints');
+    const contentReviews = document.getElementById('seller-content-reviews');
+    const contentComplaints = document.getElementById('seller-content-complaints');
+
+    if (tab === 'reviews') {
+        tabReviews.classList.add('active');
+        tabComplaints.classList.remove('active');
+        contentReviews.style.display = 'block';
+        contentComplaints.style.display = 'none';
+    } else {
+        tabReviews.classList.remove('active');
+        tabComplaints.classList.add('active');
+        contentReviews.style.display = 'none';
+        contentComplaints.style.display = 'block';
+    }
+}
+
 // Global scope bindings for inline HTML clicks (e.g. toggleFavorite)
 window.toggleFavorite = toggleFavorite;
 window.removeUploadedImage = removeUploadedImage;
@@ -3848,6 +4083,10 @@ window.setCustomFontSize = setCustomFontSize;
 window.setCustomRadius = setCustomRadius;
 window.openVideoCall = openVideoCall;
 window.renderPriceHistoryUI = renderPriceHistoryUI;
+window.openSellerDetailsModal = openSellerDetailsModal;
+window.switchSellerTab = switchSellerTab;
+window.appendSellerComplaint = appendSellerComplaint;
+window.initSellersData = initSellersData;
 
 // Run App on Load
 window.addEventListener('DOMContentLoaded', init);
